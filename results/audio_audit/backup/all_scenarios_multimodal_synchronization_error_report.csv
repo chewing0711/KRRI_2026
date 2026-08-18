@@ -1,0 +1,17 @@
+﻿state,scenario,can_sec,audio_sec,dur_error_sec,xcorr_lag_ms,xcorr_r,can_windows,matched_windows,dropped_windows,match_rate_pct
+normal,high_speed_20kph,262.81,263.56,0.749,964.0,-0.0664,734,734,0,100.0
+normal,high_speed_60kph,90.79,90.22,-0.563,856.0,0.0572,253,251,2,99.21
+normal,high_speed_80kph,65.28,65.19,-0.092,-904.0,0.0198,181,181,0,100.0
+normal,hills_6deg,25.43,25.63,0.206,1000.0,0.1477,70,70,0,100.0
+normal,hills_12deg,26.29,25.13,-1.159,-4.0,0.3364,72,69,3,95.83
+normal,hills_18deg,31.79,29.34,-2.454,972.0,0.1981,88,81,7,92.05
+normal,hills_30deg,29.99,29.14,-0.854,-176.0,0.199,83,80,3,96.39
+normal,steering_pad_40kph,61.92,60.48,-1.44,0.0,0.1342,172,168,4,97.67
+abnormal,high_speed_20kph,270.56,270.07,-0.494,688.0,0.1846,756,755,1,99.87
+abnormal,high_speed_60kph,90.66,90.62,-0.032,0.0,0.2623,252,252,0,100.0
+abnormal,high_speed_80kph,68.46,68.69,0.23,0.0,0.294,190,190,0,100.0
+abnormal,hills_6deg,28.07,26.54,-1.536,1000.0,0.3076,77,73,4,94.81
+abnormal,hills_12deg,31.87,31.86,-0.007,0.0,0.1576,88,88,0,100.0
+abnormal,hills_18deg,39.28,35.85,-3.429,1000.0,0.1416,108,99,9,91.67
+abnormal,hills_30deg,28.42,28.94,0.515,-604.0,0.0523,78,78,0,100.0
+abnormal,steering_pad_40kph,59.88,60.28,0.405,-976.0,-0.0677,166,166,0,100.0
