@@ -1,0 +1,9 @@
+﻿course,normal_file,abnormal_file,empirical_noise_band_hz,empirical_noise_delta_mean_db,data_driven_cutoff_freq_hz,max_fault_peak_freq_hz,max_fault_delta_db
+고속주회로 20kph,record_20-gear-1.wav,go_20-gear-1.wav,0 ~ 1873 Hz,0.82,1873.4,1894.9,6.77
+고속주회로 60kph,record_60-gear-1.wav,go_60-gear-1.wav,0 ~ 1820 Hz,1.35,1819.6,1884.2,11.09
+고속주회로 80kph,record_80-gear-1.wav,go_80-gear-1.wav,0 ~ 2466 Hz,1.85,2465.6,2670.1,18.42
+등판로 6도,record_up_6-gear-1.wav,go_up_6-gear-1.wav,0 ~ 904 Hz,1.96,904.4,2465.6,4.97
+등판로 12도,record_up_12-gear-1.wav,go_up_12-gear-1_cut.wav,0 ~ 484 Hz,1.97,484.5,2487.1,2.68
+등판로 18도,record_up_18-gear-1.wav,go_up_18-gear-1.wav,0 ~ 592 Hz,1.95,592.2,2476.3,4.52
+등판로 30도,record_up_30-gear-1.wav,go_up_30-gear-1.wav,0 ~ 2476 Hz,1.47,2476.3,2508.6,5.84
+원선회로 40kph,record_circle-gear-1.wav,go_up_circle_40-gear-1.wav,0 ~ 2444 Hz,1.25,2444.0,2594.8,13.28

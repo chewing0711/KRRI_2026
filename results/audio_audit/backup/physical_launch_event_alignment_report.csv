@@ -1,0 +1,17 @@
+﻿scenario,state,t_can_launch_sec,t_audio_launch_sec,delta_t_launch_ms,status
+normal_high_speed_20kph,normal,0.9099,0.0798,-830.08,OFFSET DETECTED
+normal_high_speed_60kph,normal,0.0601,0.0649,4.79,PERFECT SYNC (<=50ms)
+normal_high_speed_80kph,normal,18.9598,0.0948,-18865.01,OFFSET DETECTED
+normal_hills_6deg,normal,0.0653,0.1297,64.4,ACCEPTABLE (<=200ms)
+normal_hills_12deg,normal,0.0136,0.0549,41.31,PERFECT SYNC (<=50ms)
+normal_hills_18deg,normal,5.8848,0.0698,-5814.93,OFFSET DETECTED
+normal_hills_30deg,normal,0.9517,0.0649,-886.82,OFFSET DETECTED
+normal_steering_pad_40kph,normal,1.4026,0.0748,-1327.76,OFFSET DETECTED
+abnormal_high_speed_20kph,abnormal,0.2798,0.1796,-100.2,ACCEPTABLE (<=200ms)
+abnormal_high_speed_60kph,abnormal,1.1245,0.1447,-979.87,OFFSET DETECTED
+abnormal_high_speed_80kph,abnormal,0.1907,0.1197,-71.0,ACCEPTABLE (<=200ms)
+abnormal_hills_6deg,abnormal,0.0,1.1773,1177.32,OFFSET DETECTED
+abnormal_hills_12deg,abnormal,8.8399,0.1147,-8725.18,OFFSET DETECTED
+abnormal_hills_18deg,abnormal,4.1324,0.0698,-4062.59,OFFSET DETECTED
+abnormal_hills_30deg,abnormal,3.3548,0.0998,-3255.03,OFFSET DETECTED
+abnormal_steering_pad_40kph,abnormal,0.016,0.1746,158.59,ACCEPTABLE (<=200ms)
