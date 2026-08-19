@@ -1,5 +1,7 @@
 import can
+
 import can_parser
+import decoding_functions
 
 bus = can.Bus(
     interface="socketcan",
@@ -24,10 +26,11 @@ try:
 
         if can_id is not None:
             relative_time = round(recived_time - start_time, 5)
-            dataset = can_parser.collect_data(relative_time, can_id, data)
+            results_1s = can_parser.collect_data(relative_time, can_id, data)
 
-            if dataset is not None:
-                print(f"here, {dataset}")
+            if results_1s is not None:
+                dataset = decoding_functions.decoding(results_1s)
+                breakpoint()
 
 except KeyboardInterrupt:
     print("Exit.")

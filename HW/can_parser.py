@@ -8,10 +8,8 @@ CAN_DATA = {
     '0x386': []
 }
 
-
 LOG_INTERVAL = 1
 NEXT_INPUT_TIME = 1
-
 
 def parser(msg):
     received_time = msg.timestamp
@@ -49,3 +47,4 @@ def collect_data(relative_time, can_id, data):
         })
 
     return results_1s
+
