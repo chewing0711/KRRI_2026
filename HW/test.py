@@ -30,6 +30,7 @@ try:
 
             if results_1s is not None:
                 dataset = decoding_functions.decoding(results_1s)
+                decoding_functions.save_dataset(dataset)
                 breakpoint()
 
 except KeyboardInterrupt:

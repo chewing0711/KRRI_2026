@@ -1,5 +1,5 @@
+# CAN 데이터 바이트 배열에서 원하는 비트 구간만 잘라서 정수값으로 꺼내는 함수
 def extract_bits(data, start_bit, length, signed=False):
-    # CAN 데이터 바이트 배열에서 원하는 비트 구간만 잘라서 정수값으로 꺼내는 함수
     
     value = int.from_bytes(bytes(data), byteorder='little')
 
@@ -12,6 +12,7 @@ def extract_bits(data, start_bit, length, signed=False):
 
     return raw
 
+# 디코딩 전체 처리하는 함수
 def decoding(results_1s):
     decoded_data = {}
 
@@ -24,12 +25,33 @@ def decoding(results_1s):
 
 # 0x371 DBC 정의가 안보임
 def decode_371(packets):
+    """
+    SG_ Brake_Pedal_Pos : 0|8@1+ (1,0)
+    SG_ Accel_Pedal_Pos : 31|8@1+ (1,0)
+    """
     results = []
 
     for packet in packets:
+        data = packet['data']
+
+        brake_pedal = extract_bits(
+            data,
+            start_bit=0,
+            length=8,
+            signed=False
+        )
+
+        accel_pedal = extract_bits(
+            data,
+            start_bit=31,
+            length=8,
+            signed=False
+        )
+
         results.append({
             'time': packet['time'],
-            'data': packet['data']
+            'accel_pedal': accel_pedal,
+            'brake_pedal': brake_pedal
         })
 
     return results
@@ -121,3 +143,34 @@ def decode_386(packets):
         })
 
     return results
+
+import pandas as pd
+def save_dataset(dataset):
+
+    # 0x371 - 가속 / 브레이크
+    df_371 = pd.DataFrame(dataset['0x371'])
+    df_371.to_csv(
+        'accel_brake.csv',
+        index=False
+    )
+
+    # 0x220 - 횡가속도 / 요레이트
+    df_220 = pd.DataFrame(dataset['0x220'])
+    df_220.to_csv(
+        'yaw_rate.csv',
+        index=False
+    )
+
+    # 0x2b0 - 조향각 / 조향속도
+    df_2b0 = pd.DataFrame(dataset['0x2b0'])
+    df_2b0.to_csv(
+        'steer_angle_speed.csv',
+        index=False
+    )
+
+    # 0x386 - 네 바퀴 속도
+    df_386 = pd.DataFrame(dataset['0x386'])
+    df_386.to_csv(
+        'wheel_speed.csv',
+        index=False
+    )
