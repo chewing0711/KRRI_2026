@@ -1,0 +1,5 @@
+가상환경 실행 기억이 잘 안나서 기록
+
+cd ~/Documents/CANtest
+source .venv/bin/activate
+python test.py

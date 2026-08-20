@@ -1,0 +1,17 @@
+﻿state,scenario,can_windows,matched_windows,dropped_windows,match_rate_pct,can_duration_sec,audio_duration_sec
+abnormal,high_speed_20kph,756,755,1,99.87,270.56,270.07
+abnormal,high_speed_60kph,252,252,0,100.0,90.66,90.62
+abnormal,high_speed_80kph,190,190,0,100.0,68.46,68.69
+abnormal,hills_12deg,88,88,0,100.0,31.87,31.86
+abnormal,hills_18deg,108,99,9,91.67,39.28,35.85
+abnormal,hills_30deg,78,78,0,100.0,28.42,28.94
+abnormal,hills_6deg,77,73,4,94.81,28.07,26.54
+abnormal,steering_pad_40kph,166,166,0,100.0,59.88,60.28
+normal,high_speed_20kph,734,734,0,100.0,262.81,263.56
+normal,high_speed_60kph,253,251,2,99.21,90.79,90.22
+normal,high_speed_80kph,181,181,0,100.0,65.28,65.19
+normal,hills_12deg,72,69,3,95.83,26.29,25.13
+normal,hills_18deg,88,81,7,92.05,31.79,29.34
+normal,hills_30deg,83,80,3,96.39,29.99,29.14
+normal,hills_6deg,70,70,0,100.0,25.43,25.63
+normal,steering_pad_40kph,172,168,4,97.67,61.92,60.48

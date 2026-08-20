@@ -1,0 +1,9 @@
+﻿scenario,peak_freq_hz,normal_magnitude,abnormal_magnitude,abnormal_vs_normal_ratio
+20km/h Low Speed,12.8,150.7,4823.58,32.01
+60km/h Mid Speed,14.47,3116.98,5227.79,1.68
+80km/h High Speed,50.67,1023.29,4998.91,4.89
+6deg Hill Climb,2.6,908.08,3469.83,3.82
+12deg Hill Climb,8.87,1241.64,3624.92,2.92
+18deg Hill Climb,2.8,2825.11,5863.99,2.08
+30deg Hill Climb,3.93,4785.3,7243.72,1.51
+40km/h Steer Pad,28.93,607.08,5704.86,9.4

@@ -1,0 +1,117 @@
+{
+  "dataset_path": "/mnt/c/Users/kante/Documents/KWU/etrl_task/experiments/gearbox_final_suite/results/unified_can_context_dataset_w500.csv",
+  "window_size": "500",
+  "num_samples": 839,
+  "num_features": 39,
+  "cv_5fold_summary": {
+    "XGBoost": {
+      "accuracy": 0.9630453378956373,
+      "f1_score": 0.9640539867448614,
+      "precision": 0.9612925507293678,
+      "recall": 0.967250341997264,
+      "roc_auc": 0.9944244938782187
+    },
+    "SingleGRU": {
+      "accuracy": 0.9642358140861134,
+      "f1_score": 0.9648948597433868,
+      "precision": 0.9650241322744744,
+      "recall": 0.9648700410396718,
+      "roc_auc": 0.9928125300240032
+    },
+    "OneClassSVM": {
+      "accuracy": 0.6030439121756487,
+      "f1_score": 0.4725715936446798,
+      "precision": 0.735897022776722,
+      "recall": 0.34908344733242136,
+      "roc_auc": 0.5752391367880517
+    },
+    "SingleRNN": {
+      "accuracy": 0.9678001140575991,
+      "f1_score": 0.9684198595775395,
+      "precision": 0.9674126138025378,
+      "recall": 0.9695212038303694,
+      "roc_auc": 0.9945214510573072
+    },
+    "XGBoost+GRU": {
+      "accuracy": 0.9749572284003423,
+      "f1_score": 0.9754615622934522,
+      "precision": 0.9769230976750711,
+      "recall": 0.9742270861833106,
+      "roc_auc": 0.997744964710867
+    },
+    "OneClassSVM+GRU": {
+      "accuracy": 0.954697747362418,
+      "f1_score": 0.9558120647673605,
+      "precision": 0.9495953244796402,
+      "recall": 0.9624897400820794,
+      "roc_auc": 0.9934411778775709
+    },
+    "OneClassSVM+RNN": {
+      "accuracy": 0.967807242657542,
+      "f1_score": 0.9688094610321565,
+      "precision": 0.9568278625254919,
+      "recall": 0.9812585499316006,
+      "roc_auc": 0.9937921034510067
+    }
+  },
+  "loso_summary": {
+    "xgboost_mean_acc": 0.7814014233556911,
+    "xgboost_mean_f1": 0.8087240041046695,
+    "gru_mean_acc": 0.8043675739346696,
+    "gru_mean_f1": 0.8325056480869022,
+    "xgb_gru_mean_acc": 0.8263046400187003,
+    "xgb_gru_mean_f1": 0.8586535276393858
+  },
+  "top_features": [
+    {
+      "rank": 1,
+      "feature": "yaw_rate_mean",
+      "importance": 0.11130866408348083
+    },
+    {
+      "rank": 2,
+      "feature": "sas_angle_mean",
+      "importance": 0.10761184245347977
+    },
+    {
+      "rank": 3,
+      "feature": "norm_yaw_rate",
+      "importance": 0.07497228682041168
+    },
+    {
+      "rank": 4,
+      "feature": "diff_fr_rr_std",
+      "importance": 0.0688200518488884
+    },
+    {
+      "rank": 5,
+      "feature": "brake_pedal_max",
+      "importance": 0.0625070333480835
+    },
+    {
+      "rank": 6,
+      "feature": "shape_factor",
+      "importance": 0.0545133501291275
+    },
+    {
+      "rank": 7,
+      "feature": "accel_pedal_mean",
+      "importance": 0.04096716642379761
+    },
+    {
+      "rank": 8,
+      "feature": "diff_fr_rr_mean",
+      "importance": 0.04062218964099884
+    },
+    {
+      "rank": 9,
+      "feature": "peak",
+      "importance": 0.03616523742675781
+    },
+    {
+      "rank": 10,
+      "feature": "diff_fl_rl_p2p",
+      "importance": 0.03196842968463898
+    }
+  ]
+}

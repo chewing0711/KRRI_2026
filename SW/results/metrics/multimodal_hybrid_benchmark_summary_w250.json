@@ -1,0 +1,71 @@
+{
+  "dataset_path": "/mnt/c/Users/kante/Documents/KWU/etrl_task/experiments/gearbox_final_suite/data/unified_multimodal_dataset_w250.csv",
+  "window_size": "250",
+  "num_samples": 1617,
+  "can_features_count": 43,
+  "audio_features_count": 14,
+  "total_features_count": 57,
+  "cv_5fold_summary_matrix": {
+    "[Matrix Seq=5] [1:UNSUPER / 2:SUPERVISED] AE + XGBoost (Hybrid Gated)": {
+      "accuracy": 0.9992277992277993,
+      "f1_score": 0.9992565055762082,
+      "precision": 0.9985185185185184,
+      "recall": 1.0,
+      "roc_auc": 1.0
+    },
+    "[Matrix Seq=5] [1:UNSUPER / 2:SUPERVISED] AE + SingleGRU (Hybrid Gated)": {
+      "accuracy": 0.9984585684585685,
+      "f1_score": 0.9985130111524164,
+      "precision": 0.9970370370370369,
+      "recall": 1.0,
+      "roc_auc": 0.9999763089315328
+    },
+    "[Matrix Seq=5] [1:SEMISUPER / 2:SUPERVISED] OC-SVM + XGBoost (Hybrid Gated)": {
+      "accuracy": 0.9953816453816454,
+      "f1_score": 0.9955772218969244,
+      "precision": 0.9912295159609738,
+      "recall": 1.0,
+      "roc_auc": 0.9999763089315328
+    },
+    "[Matrix Seq=5] [1:SEMISUPER / 2:SUPERVISED] OC-SVM + SingleGRU (Hybrid Gated)": {
+      "accuracy": 0.9976893376893378,
+      "f1_score": 0.9977750037723426,
+      "precision": 0.9955664488017429,
+      "recall": 1.0,
+      "roc_auc": 1.0
+    },
+    "[Matrix Seq=5] [1:SEMISUPER / 2:SUPERVISED] iForest + XGBoost (Hybrid Gated)": {
+      "accuracy": 1.0,
+      "f1_score": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "roc_auc": 1.0
+    },
+    "[Matrix Seq=5] [1:SEMISUPER / 2:SUPERVISED] iForest + SingleGRU (Hybrid Gated)": {
+      "accuracy": 0.9976863676863676,
+      "f1_score": 0.9977750240947266,
+      "precision": 0.9955773420479304,
+      "recall": 1.0,
+      "roc_auc": 1.0
+    }
+  },
+  "holdout_60kph_unseen_summary": {
+    "can_only_acc": 0.7051792828685259,
+    "can_only_f1": 0.6509433962264151,
+    "multimodal_acc": 0.7729083665338645,
+    "multimodal_f1": 0.7046632124352331,
+    "f1_improvement_pct": 5.3719816208818045
+  },
+  "latency_summary": {
+    "1. [2-Step] AutoEncoder + XGBoost": {
+      "mean_latency_ms": 0.48403093002889364,
+      "p99_latency_ms": 0.637475130051826,
+      "throughput_fps": 2065.983675754577
+    },
+    "2. [2-Step] AutoEncoder + SingleGRU": {
+      "mean_latency_ms": 0.1901620499938872,
+      "p99_latency_ms": 0.306037299992568,
+      "throughput_fps": 5258.6728005516625
+    }
+  }
+}

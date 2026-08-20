@@ -1,0 +1,33 @@
+﻿channel,state,filename,tech_1_hilbert_env_mean,tech_1_hilbert_env_peak,tech_2_order_mean_rms,tech_3_clean_snr_gain_db
+Gear-1,abnormal,go_20-gear-1.wav,0.206761,1.304206,0.16417,N/A (Applied to OBD-2)
+OBD-2,abnormal,go_20-obd-2.wav,N/A (Applied to Gear-1),N/A (Applied to Gear-1),N/A (Applied to Gear-1),-1.1292
+Gear-1,abnormal,go_60-gear-1.wav,0.514072,2.186654,0.397433,N/A (Applied to OBD-2)
+OBD-2,abnormal,go_60-obd-2.wav,N/A (Applied to Gear-1),N/A (Applied to Gear-1),N/A (Applied to Gear-1),-1.1073
+Gear-1,abnormal,go_80-gear-1.wav,0.533524,2.187558,0.411057,N/A (Applied to OBD-2)
+OBD-2,abnormal,go_80-obd-2.wav,N/A (Applied to Gear-1),N/A (Applied to Gear-1),N/A (Applied to Gear-1),-1.0904
+Gear-1,abnormal,go_up_12-gear-1_cut.wav,0.211336,1.568841,0.166966,N/A (Applied to OBD-2)
+OBD-2,abnormal,go_up_12-obd-2_cut.wav,N/A (Applied to Gear-1),N/A (Applied to Gear-1),N/A (Applied to Gear-1),-0.0869
+Gear-1,abnormal,go_up_18-gear-1.wav,0.211509,1.213075,0.168467,N/A (Applied to OBD-2)
+OBD-2,abnormal,go_up_18-obd-2.wav,N/A (Applied to Gear-1),N/A (Applied to Gear-1),N/A (Applied to Gear-1),-0.7828
+Gear-1,abnormal,go_up_30-gear-1.wav,0.294367,1.516611,0.234356,N/A (Applied to OBD-2)
+OBD-2,abnormal,go_up_30-obd-2.wav,N/A (Applied to Gear-1),N/A (Applied to Gear-1),N/A (Applied to Gear-1),-0.8141
+Gear-1,abnormal,go_up_6-gear-1.wav,0.217728,1.462835,0.173926,N/A (Applied to OBD-2)
+OBD-2,abnormal,go_up_6-obd-2.wav,N/A (Applied to Gear-1),N/A (Applied to Gear-1),N/A (Applied to Gear-1),-0.8199
+Gear-1,abnormal,go_up_circle_40-gear-1.wav,0.459897,1.972725,0.355848,N/A (Applied to OBD-2)
+OBD-2,abnormal,go_up_circle_40-obd-2.wav,N/A (Applied to Gear-1),N/A (Applied to Gear-1),N/A (Applied to Gear-1),-1.0591
+Gear-1,normal,record_20-gear-1.wav,0.221813,1.52009,0.176563,N/A (Applied to OBD-2)
+OBD-2,normal,record_20-obd-2.wav,N/A (Applied to Gear-1),N/A (Applied to Gear-1),N/A (Applied to Gear-1),-0.9879
+Gear-1,normal,record_60-gear-1.wav,0.481051,2.107029,0.376441,N/A (Applied to OBD-2)
+OBD-2,normal,record_60-obd-2.wav,N/A (Applied to Gear-1),N/A (Applied to Gear-1),N/A (Applied to Gear-1),-0.3094
+Gear-1,normal,record_80-gear-1.wav,0.502873,2.273983,0.394857,N/A (Applied to OBD-2)
+OBD-2,normal,record_80-obd-2.wav,N/A (Applied to Gear-1),N/A (Applied to Gear-1),N/A (Applied to Gear-1),-0.2487
+Gear-1,normal,record_up_12-gear-1.wav,0.232336,1.630646,0.185005,N/A (Applied to OBD-2)
+OBD-2,normal,record_up_12-obd-2.wav,N/A (Applied to Gear-1),N/A (Applied to Gear-1),N/A (Applied to Gear-1),-0.716
+Gear-1,normal,record_up_18-gear-1.wav,0.28309,1.650502,0.227849,N/A (Applied to OBD-2)
+OBD-2,normal,record_up_18-obd-2.wav,N/A (Applied to Gear-1),N/A (Applied to Gear-1),N/A (Applied to Gear-1),-0.6065
+Gear-1,normal,record_up_30-gear-1.wav,0.230948,1.499218,0.18485,N/A (Applied to OBD-2)
+OBD-2,normal,record_up_30-obd-2.wav,N/A (Applied to Gear-1),N/A (Applied to Gear-1),N/A (Applied to Gear-1),-0.7793
+Gear-1,normal,record_up_6-gear-1.wav,0.321125,1.554145,0.255749,N/A (Applied to OBD-2)
+OBD-2,normal,record_up_6-obd-2.wav,N/A (Applied to Gear-1),N/A (Applied to Gear-1),N/A (Applied to Gear-1),-0.6117
+Gear-1,normal,record_circle-gear-1.wav,0.356681,1.769834,0.280312,N/A (Applied to OBD-2)
+OBD-2,normal,record_circle-obd-2.wav,N/A (Applied to Gear-1),N/A (Applied to Gear-1),N/A (Applied to Gear-1),-0.5182

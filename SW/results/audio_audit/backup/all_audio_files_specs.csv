@@ -1,0 +1,33 @@
+﻿state,scenario,filename,sample_rate_hz,channels,num_samples,duration_sec
+abnormal,"고속주회로 한바퀴(High Speed circut, one round) 20kph",go_20-OBD-2.wav,44100,2,11909952,270.067
+abnormal,"고속주회로 한바퀴(High Speed circut, one round) 20kph",go_20-gear-1.wav,44100,2,11909952,270.067
+abnormal,"고속주회로 한바퀴(High Speed circut, one round) 60kph",go_60-OBD-2.wav,44100,2,3996480,90.623
+abnormal,"고속주회로 한바퀴(High Speed circut, one round) 60kph",go_60-gear-1.wav,44100,2,3996480,90.623
+abnormal,"고속주회로 한바퀴(High Speed circut, one round) 80kph",go_80-OBD-2.wav,44100,2,3029376,68.693
+abnormal,"고속주회로 한바퀴(High Speed circut, one round) 80kph",go_80-gear-1.wav,44100,2,3029376,68.693
+abnormal,등판로 12도(Test Hills 12% grade) 20kph,go_up_12-OBD-2_cut.wav,44100,2,1774722,40.243
+abnormal,등판로 12도(Test Hills 12% grade) 20kph,go_up_12-gear-1_cut.wav,44100,2,1774722,40.243
+abnormal,등판로 18도(Test Hills 18% grade) 20kph,go_up_18-OBD-2.wav,44100,2,1580928,35.849
+abnormal,등판로 18도(Test Hills 18% grade) 20kph,go_up_18-gear-1.wav,44100,2,1580928,35.849
+abnormal,등판로 30도(Test Hills 30% grade) 20kph,go_up_30-OBD-2.wav,44100,2,1276224,28.939
+abnormal,등판로 30도(Test Hills 30% grade) 20kph,go_up_30-gear-1.wav,44100,2,1276224,28.939
+abnormal,등판로 6도(Test Hills 6% grade) 20kph,go_up_6-OBD-2.wav,44100,2,1170240,26.536
+abnormal,등판로 6도(Test Hills 6% grade) 20kph,go_up_6-gear-1.wav,44100,2,1170240,26.536
+abnormal,"원선회로 1분(Steer Pad, 1minute) 40kph",go_up_circle_40-OBD-2.wav,44100,2,2658432,60.282
+abnormal,"원선회로 1분(Steer Pad, 1minute) 40kph",go_up_circle_40-gear-1.wav,44100,2,2658432,60.282
+normal,"고속주회로 한바퀴(High Speed circut, one round) 20kph",record_20-gear-1.wav,44100,2,11622912,263.558
+normal,"고속주회로 한바퀴(High Speed circut, one round) 20kph",record_20-obd-2.wav,44100,2,11622912,263.558
+normal,"고속주회로 한바퀴(High Speed circut, one round) 60kph",record_60-gear-1.wav,44100,2,3978816,90.223
+normal,"고속주회로 한바퀴(High Speed circut, one round) 60kph",record_60-obd-2.wav,44100,2,3978816,90.223
+normal,"고속주회로 한바퀴(High Speed circut, one round) 80kph",record_80-gear-1.wav,44100,2,2874816,65.189
+normal,"고속주회로 한바퀴(High Speed circut, one round) 80kph",record_80-obd-2.wav,44100,2,2874816,65.189
+normal,등판로 12도(Test Hills 12% grade) 20kph,record_up_12-gear-1.wav,44100,2,1108416,25.134
+normal,등판로 12도(Test Hills 12% grade) 20kph,record_up_12-obd-2.wav,44100,2,1108416,25.134
+normal,등판로 18도(Test Hills 18% grade) 20kph,record_up_18-gear-1.wav,44100,2,1293888,29.34
+normal,등판로 18도(Test Hills 18% grade) 20kph,record_up_18-obd-2.wav,44100,2,1293888,29.34
+normal,등판로 30도(Test Hills 30% grade) 20kph,record_up_30-gear-1.wav,44100,2,1285056,29.14
+normal,등판로 30도(Test Hills 30% grade) 20kph,record_up_30-obd-2.wav,44100,2,1285056,29.14
+normal,등판로 6도(Test Hills 6% grade) 20kph,record_up_6-gear-1.wav,44100,2,1130496,25.635
+normal,등판로 6도(Test Hills 6% grade) 20kph,record_up_6-obd-2.wav,44100,2,1130496,25.635
+normal,"원선회로 1분(Steer Pad, 1minute) 40kph",record_circle-gear-1.wav,44100,2,2667264,60.482
+normal,"원선회로 1분(Steer Pad, 1minute) 40kph",record_circle-obd-2.wav,44100,2,2667264,60.482
