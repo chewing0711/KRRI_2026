@@ -38,17 +38,17 @@ import xgboost as xgb
 
 warnings.filterwarnings("ignore")
 
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-SUITE_DIR = os.path.dirname(os.path.dirname(CURRENT_DIR))
-DATA_PATH = os.path.join(SUITE_DIR, "data", "unified_multimodal_dataset_w250.csv")
-REPORTS_DIR = os.path.join(SUITE_DIR, "results", "reports")
-METRICS_DIR = os.path.join(SUITE_DIR, "results", "metrics")
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) # 패키지/src
+PACKAGE_DIR = os.path.dirname(CURRENT_DIR)               # 패키지/
+DATA_PATH = os.path.join(PACKAGE_DIR, "data", "unified_multimodal_dataset_w250.csv")
+REPORTS_DIR = os.path.join(PACKAGE_DIR, "results", "reports")
+METRICS_DIR = os.path.join(PACKAGE_DIR, "results", "metrics")
 
 os.makedirs(REPORTS_DIR, exist_ok=True)
 os.makedirs(METRICS_DIR, exist_ok=True)
 
-# 시계열 Matrix 빌더 임포트
-sys.path.append(os.path.join(SUITE_DIR, "src", "data_processing"))
+# 시계열 Matrix 빌더 임포트 (배포 패키지 내 src 폴더 참조)
+sys.path.append(CURRENT_DIR)
 from sequence_matrix_builder import create_flattened_lag_matrix
 
 
