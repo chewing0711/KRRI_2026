@@ -25,10 +25,9 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-SUITE_DIR = os.path.dirname(CURRENT_DIR)
-METRICS_DIR = os.path.join(SUITE_DIR, "results", "metrics")
+METRICS_DIR = os.path.join(CURRENT_DIR, "results", "metrics")
 CSV_PATH = os.path.join(METRICS_DIR, "thermal_profile_2hours.csv")
-FIGURES_DIR = os.path.join(SUITE_DIR, "results", "figures")
+FIGURES_DIR = os.path.join(CURRENT_DIR, "results", "figures")
 os.makedirs(FIGURES_DIR, exist_ok=True)
 
 

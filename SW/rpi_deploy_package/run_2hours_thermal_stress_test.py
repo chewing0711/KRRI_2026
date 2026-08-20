@@ -29,14 +29,13 @@ import psutil
 import torch
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-SUITE_DIR = os.path.dirname(CURRENT_DIR)
-DATA_PATH = os.path.join(SUITE_DIR, "data", "unified_multimodal_dataset_w250.csv")
-MODELS_DIR = os.path.join(SUITE_DIR, "models")
-METRICS_DIR = os.path.join(SUITE_DIR, "results", "metrics")
+DATA_PATH = os.path.join(CURRENT_DIR, "data", "unified_multimodal_dataset_w250.csv")
+MODELS_DIR = os.path.join(CURRENT_DIR, "models")
+METRICS_DIR = os.path.join(CURRENT_DIR, "results", "metrics")
 os.makedirs(METRICS_DIR, exist_ok=True)
 
-# 링버퍼 모듈 임포트
-sys.path.append(os.path.join(SUITE_DIR, "src", "data_processing"))
+# 링버퍼 모듈 임포트 (배포 패키지 내 src 폴더 참조)
+sys.path.append(os.path.join(CURRENT_DIR, "src"))
 from sequence_matrix_builder import RealtimeSequenceBuffer
 
 
