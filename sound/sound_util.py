@@ -37,7 +37,7 @@ def check_mic_size():
 
 
 def check_sound(
-    threshold=0.01,
+    threshold=0.0,
     duration=1.0,
     samplerate=48000.0,
     device=None
@@ -60,5 +60,4 @@ def check_sound(
     rms = np.sqrt(np.mean(audio ** 2))
 
     print(f"RMS: {rms:.5f}")
-
     return rms >= threshold
