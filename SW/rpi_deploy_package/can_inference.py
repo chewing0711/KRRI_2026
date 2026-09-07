@@ -11,17 +11,15 @@ import can
 
 # 경로 설정
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-GIT_UPLOADS_DIR = os.path.dirname(CURRENT_DIR)
-SW_DIR = os.path.join(GIT_UPLOADS_DIR, "SW")
-MODELS_DIR = os.path.join(SW_DIR, "models")
+MODELS_DIR = os.path.join(CURRENT_DIR, "models")
 
-sys.path.insert(0, CURRENT_DIR)  # HW 폴더
-sys.path.insert(0, os.path.join(SW_DIR, "src", "models_pipelines"))
-sys.path.insert(0, os.path.join(SW_DIR, "src", "data_processing"))
+sys.path.insert(0, CURRENT_DIR)
+sys.path.insert(0, os.path.join(CURRENT_DIR, "src"))
+
 
 import can_parser
 import decoding_functions
-from train_unified_models import AnomalyAutoEncoder, SingleGRU
+from can_models import AnomalyAutoEncoder, SingleGRU
 from sequence_matrix_builder import RealtimeSequenceBuffer
 
 
