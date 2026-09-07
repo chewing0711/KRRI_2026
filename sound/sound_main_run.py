@@ -285,32 +285,3 @@ def sound_main():
 
     return sound_model_output
 
-
-if __name__ == "__main__":
-    import time
-    from datetime import datetime
-
-    print("=" * 70)
-    print(" [실시간 마이크 오디오 이상 진단 모니터링 노드]")
-    print(" 1초 주기로 실시간 음원 수집, 통계량 추출 및 고장 예측 수행 (종료: Ctrl + C)")
-    print("=" * 70)
-
-    loop_count = 0
-    try:
-        while True:
-            loop_count += 1
-            t_start = time.perf_counter()
-
-            # 1초 음원 녹음 -> 전처리 -> 모델 추론
-            result = sound_main()
-
-            t_elapsed_ms = (time.perf_counter() - t_start) * 1000.0
-            cur_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-            status_str = f"[{result['status']}]"
-            print(f" [{cur_time}] #{loop_count:04d} | 상태: {status_str:<10} | 예측: {result['prediction']} | 고장 확률: {result['fault_probability'] * 100:>5.2f}% | 처리시간: {t_elapsed_ms:.1f}ms")
-
-    except KeyboardInterrupt:
-        print("\n [종료] 사용자에 의해 실시간 오디오 진단이 안전하게 중단되었습니다.")
-    except Exception as e:
-        print(f"\n [오류 발생] {e}")
