@@ -1,4 +1,4 @@
-from SW.rpi_deploy_package.live_can_inference_node import run_live_inference
+from SW.rpi_deploy_package.can_inference import can_main
 from sound.sound_util import check_mic, check_sound
 from sound.sound_main_run import sound_main
 
@@ -13,4 +13,4 @@ if __name__ == "__main__":
         sound_main()
 
     except Exception:
-        run_live_inference()
+        can_main()
