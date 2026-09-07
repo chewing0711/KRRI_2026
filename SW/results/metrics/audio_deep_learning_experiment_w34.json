@@ -1,0 +1,66 @@
+{
+  "1a_causal_temporal_30pct_gap": {
+    "cosine_similarity_leakage": 0.9750821590423584,
+    "models": {
+      "AudioCRNN (1D-CNN + GRU Architecture)": {
+        "accuracy": 0.9876135425268373,
+        "precision": 0.9950980392156863,
+        "recall": 0.9806763285024155,
+        "f1_score": 0.9878345498783455,
+        "roc_auc": 0.998856409836513,
+        "latency_ms": 0.5763856201519957,
+        "throughput_fps": 1734.9495980421843
+      },
+      "Audio2DSpectrogramCNN (2D Vision Model)": {
+        "accuracy": 0.8538398018166804,
+        "precision": 0.8592233009708737,
+        "recall": 0.855072463768116,
+        "f1_score": 0.8571428571428571,
+        "roc_auc": 0.9224378394606839,
+        "latency_ms": 0.30917429005057784,
+        "throughput_fps": 3234.4215938408397
+      },
+      "AudioResNet1D (1D Residual Block)": {
+        "accuracy": 0.9884393063583815,
+        "precision": 1.0,
+        "recall": 0.9774557165861514,
+        "f1_score": 0.988599348534202,
+        "roc_auc": 0.9995360135374873,
+        "latency_ms": 0.18250022014399292,
+        "throughput_fps": 5479.445445112333
+      }
+    }
+  },
+  "1b_causal_temporal_40pct_gap": {
+    "cosine_similarity_leakage": 0.9659925103187561,
+    "models": {
+      "AudioCRNN (1D-CNN + GRU Architecture)": {
+        "accuracy": 0.9692691029900332,
+        "precision": 0.9982876712328768,
+        "recall": 0.9418416801292407,
+        "f1_score": 0.969243557772236,
+        "roc_auc": 0.9986993082308105,
+        "latency_ms": 0.5506180501106428,
+        "throughput_fps": 1816.1409706766008
+      },
+      "Audio2DSpectrogramCNN (2D Vision Model)": {
+        "accuracy": 0.845514950166113,
+        "precision": 0.9409368635437881,
+        "recall": 0.7463651050080775,
+        "f1_score": 0.8324324324324325,
+        "roc_auc": 0.9461773193598719,
+        "latency_ms": 0.43141126010596054,
+        "throughput_fps": 2317.9738047504516
+      },
+      "AudioResNet1D (1D Residual Block)": {
+        "accuracy": 0.9916943521594684,
+        "precision": 0.9983633387888707,
+        "recall": 0.9854604200323102,
+        "f1_score": 0.991869918699187,
+        "roc_auc": 0.9995332974331359,
+        "latency_ms": 0.17002273008984048,
+        "throughput_fps": 5881.566538024635
+      }
+    }
+  }
+}

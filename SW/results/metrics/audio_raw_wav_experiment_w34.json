@@ -1,0 +1,37 @@
+{
+  "[UNSUPER]   AutoEncoder (MSE Threshold)       | STFT mean 129-dim": {
+    "accuracy": 0.6440868263473054,
+    "precision": 0.8874773139745916,
+    "recall": 0.3548621190130624,
+    "f1_score": 0.5069984447900466,
+    "roc_auc": 0.753689575421225
+  },
+  "[SEMISUPER] OC-SVM (Decision Boundary)        | STFT mean 129-dim": {
+    "accuracy": 0.6493263473053892,
+    "precision": 0.9060773480662984,
+    "recall": 0.3570391872278665,
+    "f1_score": 0.5122332118688183,
+    "roc_auc": 0.9152222045255204
+  },
+  "[SEMISUPER] Isolation Forest (Anomaly Score)  | STFT mean 129-dim": {
+    "accuracy": 0.5707335329341318,
+    "precision": 0.8328530259365994,
+    "recall": 0.20972423802612483,
+    "f1_score": 0.33507246376811595,
+    "roc_auc": 0.6786900801511049
+  },
+  "[SUPER]     XGBoost (Window)                  | STFT mean 129-dim": {
+    "accuracy": 0.9827844311377245,
+    "precision": 0.9812138728323699,
+    "recall": 0.9854862119013063,
+    "f1_score": 0.9833454018826937,
+    "roc_auc": 0.9985222630741863
+  },
+  "[SUPER]     SingleGRU (STFT Frames Seq)       | STFT frames [n_f x 129]": {
+    "accuracy": 0.8559131736526946,
+    "precision": 0.9366754617414248,
+    "recall": 0.7728592162554426,
+    "f1_score": 0.8469184890656064,
+    "roc_auc": 0.9138942041307093
+  }
+}

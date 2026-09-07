@@ -8,7 +8,7 @@ build_standalone_audio_context_dataset.py (gearbox_final_suite / src / audio_pro
    - 힐베르트 포락선 통계: env_mean, env_std, env_peak, env_crest, env_kurtosis
    - 기어 충격파 지표: shockwave_energy_ratio (상위 5% 충격 에너지 비중), shockwave_pulse_count (충격 펄스 횟수)
 4. 시간 및 주파수 피처: RMS, Peak, Crest, Kurtosis, STFT 2.8k dB, Harmonics dB, Spectral Centroid
-5. CAN 데이터셋과 1:1 타임스탬프 동기화된 독립 보조 데이터셋(unified_audio_context_dataset_w250.csv) 생성
+5. CAN 데이터셋과 1:1 타임스탬프 동기화된 독립 보조 데이터셋(unified_audio_context_dataset_w34.csv) 생성
 
 규정 준수:
 - Rule 3: 코드 주석 100% 한글, Matplotlib/터미널 100% 영문 라벨.
@@ -30,6 +30,7 @@ SRC_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SUITE_DIR = os.path.dirname(SRC_DIR)
 DATA_DIR = os.path.join(SUITE_DIR, "data")
 RESULTS_DIR = os.path.join(SUITE_DIR, "results")
+
 RAW_DECODED_DIR = os.path.join(DATA_DIR, "raw_decoded")
 AUDIO_LAUNCH_ALIGNED_DIR = os.path.join(DATA_DIR, "audio_launch_aligned")
 AUDIO_FILTERED_BPF_DIR = os.path.join(DATA_DIR, "audio_filtered_bpf")
@@ -90,7 +91,7 @@ def apply_butterworth_bpf(audio_signal, sr, lowcut=1800.0, highcut=10500.0, orde
 
 def extract_audio_window_features(audio_slice, sr):
     """
-    단일 0.74초 윈도우 슬라이스(디지털 필터링 완료 신호)에서
+    단일 0.1초 윈도우 슬라이스(디지털 필터링 완료 신호)에서
     시간/주파수 및 힐베르트 포락선/충격파 피처 전수 추출
     """
     if len(audio_slice) < 64:
@@ -166,12 +167,12 @@ def extract_audio_window_features(audio_slice, sr):
     }
 
 
-def build_filtered_standalone_audio_dataset(window_size=250, step_size=250):
+def build_filtered_standalone_audio_dataset(window_size=34, step_size=34):
     """
-    32개 파일 4차 BPF 필터링 적용 및 0% 중첩(Step=250, 비중첩) 1:1 독립 데이터셋 생성
+    32개 파일 4차 BPF 필터링 적용 및 0% 중첩(Step=34, 비중첩) 1:1 독립 데이터셋 생성
     """
     print("\n" + "=" * 135)
-    print(" [4차 버터워스 BPF 필터링 및 0% 비중첩(Step=250) 힐베르트/충격파 피처셋 추출 시작]")
+    print(" [4차 버터워스 BPF 필터링 및 0% 비중첩(Step=34) 힐베르트/충격파 피처셋 추출 시작]")
     print("=" * 135)
     print(f" {'시나리오명':<30} | {'CAN 총 윈도우':<14} | {'1:1 유효 매칭':<14} | {'결손 제외(Drop)':<16} | {'힐베르트/충격파 추출'}")
     print("-" * 135)
@@ -284,4 +285,4 @@ def build_filtered_standalone_audio_dataset(window_size=250, step_size=250):
 
 
 if __name__ == "__main__":
-    build_filtered_standalone_audio_dataset(window_size=250, step_size=250)
+    build_filtered_standalone_audio_dataset(window_size=34, step_size=34)

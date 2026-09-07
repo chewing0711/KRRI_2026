@@ -39,10 +39,14 @@ import xgboost as xgb
 warnings.filterwarnings("ignore")
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-SUITE_DIR = os.path.dirname(os.path.dirname(CURRENT_DIR))
-DATA_PATH = os.path.join(SUITE_DIR, "data", "unified_multimodal_dataset_w250.csv")
-REPORTS_DIR = os.path.join(SUITE_DIR, "results", "reports")
-METRICS_DIR = os.path.join(SUITE_DIR, "results", "metrics")
+SRC_DIR = os.path.dirname(CURRENT_DIR) if "models_pipelines" in CURRENT_DIR else CURRENT_DIR
+SUITE_DIR = os.path.dirname(SRC_DIR)
+RESULTS_DIR = os.path.join(SUITE_DIR, "results")
+DATA_DIR = os.path.join(SUITE_DIR, "data")
+
+DATA_PATH = os.path.join(DATA_DIR, "unified_multimodal_dataset_w34.csv")
+REPORTS_DIR = os.path.join(RESULTS_DIR, "reports")
+METRICS_DIR = os.path.join(RESULTS_DIR, "metrics")
 
 os.makedirs(REPORTS_DIR, exist_ok=True)
 os.makedirs(METRICS_DIR, exist_ok=True)
@@ -105,14 +109,14 @@ def run_fusion_strategies_experiment():
         X_a_tr_s = scaler_a.fit_transform(X_aud_tr)
         X_a_te_s = scaler_a.transform(X_aud_te)
 
-        # 2. 5스텝 시계열 Matrix 변환 적용 (세션 격리)
-        X_c_tr_mat, y_tr_mat = create_flattened_lag_matrix(X_c_tr_s, y=y_tr, session_ids=sess_tr, seq_len=5)
-        X_c_te_mat, y_te_mat = create_flattened_lag_matrix(X_c_te_s, y=y_te, session_ids=sess_te, seq_len=5)
+        # 2. 10스텝 시계열 Matrix 변환 적용 (세션 격리)
+        X_c_tr_mat, y_tr_mat = create_flattened_lag_matrix(X_c_tr_s, y=y_tr, session_ids=sess_tr, seq_len=10)
+        X_c_te_mat, y_te_mat = create_flattened_lag_matrix(X_c_te_s, y=y_te, session_ids=sess_te, seq_len=10)
 
-        X_a_tr_mat, _ = create_flattened_lag_matrix(X_a_tr_s, y=y_tr, session_ids=sess_tr, seq_len=5)
-        X_a_te_mat, _ = create_flattened_lag_matrix(X_a_te_s, y=y_te, session_ids=sess_te, seq_len=5)
+        X_a_tr_mat, _ = create_flattened_lag_matrix(X_a_tr_s, y=y_tr, session_ids=sess_tr, seq_len=10)
+        X_a_te_mat, _ = create_flattened_lag_matrix(X_a_te_s, y=y_te, session_ids=sess_te, seq_len=10)
 
-        # [전략 1] Baseline 단순 결합 (Matrix 285차원 = CAN 215 + Audio 70)
+        # [전략 1] Baseline 단순 결합 (Matrix 570차원 = CAN 430 + Audio 140)
         X_tr_s1 = np.hstack([X_c_tr_mat, X_a_tr_mat])
         X_te_s1 = np.hstack([X_c_te_mat, X_a_te_mat])
 
@@ -240,24 +244,20 @@ def run_fusion_strategies_experiment():
         m_drop_f1 = float(np.mean(audio_drop_results[s_name])) * 100
         print(f" {s_name:<45} | {m_noise_fp:>28.2f}% 오탐 | {m_drop_f1:>28.2f}% F1 유지")
 
-    print("=" * 120)
-    print(" [실험 결론]:")
-    print("  * 전략 4 (CAN 주도 게이팅)은 정상 상태에서 오디오 노이즈가 주입되어도 오탐률 0.00%를 완벽 방어함.")
-    print("  * 마이크 센서 단선 시에도 CAN 단독 모드로 즉시 전환되어 가장 높은 생존율을 보존함.\n")
 
-    FUSION_MODELS_DIR = os.path.join(SUITE_DIR, "models", "fusion_strategies")
+    FUSION_MODELS_DIR = os.path.join(RESULTS_DIR, "models", "fusion_strategies")
     os.makedirs(FUSION_MODELS_DIR, exist_ok=True)
 
-    # 1. 전체 데이터 스케일링 및 5스텝 Matrix 변환
+    # 1. 전체 데이터 스케일링 및 10스텝 Matrix 변환
     full_scaler_c = StandardScaler().fit(X_can)
     full_scaler_a = StandardScaler().fit(X_aud)
     X_c_s = full_scaler_c.transform(X_can)
     X_a_s = full_scaler_a.transform(X_aud)
 
-    X_c_full_mat, y_full_mat = create_flattened_lag_matrix(X_c_s, y=y, session_ids=session_ids, seq_len=5)
-    X_a_full_mat, _ = create_flattened_lag_matrix(X_a_s, y=y, session_ids=session_ids, seq_len=5)
+    X_c_full_mat, y_full_mat = create_flattened_lag_matrix(X_c_s, y=y, session_ids=session_ids, seq_len=10)
+    X_a_full_mat, _ = create_flattened_lag_matrix(X_a_s, y=y, session_ids=session_ids, seq_len=10)
 
-    # 2. 전략별 최종 모델 학습 및 직렬화 (Matrix 285차원)
+    # 2. 전략별 최종 모델 학습 및 직렬화 (Matrix 570차원)
     # [전략 4용] CAN 전용 모델 및 Audio 전용 모델
     final_m_can = xgb.XGBClassifier(n_estimators=120, max_depth=4, learning_rate=0.05, random_state=42, eval_metric="logloss", n_jobs=-1).fit(X_c_full_mat, y_full_mat)
     final_m_aud = xgb.XGBClassifier(n_estimators=100, max_depth=3, learning_rate=0.05, random_state=42, eval_metric="logloss", n_jobs=-1).fit(X_a_full_mat, y_full_mat)

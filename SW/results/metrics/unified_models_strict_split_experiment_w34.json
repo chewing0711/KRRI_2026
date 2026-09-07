@@ -1,0 +1,90 @@
+{
+  "1_causal_temporal_split": {
+    "[Matrix Seq=10] [1:UNSUPER / 2:SUPERVISED] AE + XGBoost (Hybrid Gated)": {
+      "accuracy": 0.9616252821670429,
+      "f1_score": 0.963150289017341,
+      "precision": 0.9453900709219858,
+      "recall": 0.9815905743740795,
+      "roc_auc": 0.9781715192024472
+    },
+    "[Matrix Seq=10] [1:UNSUPER / 2:SUPERVISED] AE + SingleGRU (Hybrid Gated)": {
+      "accuracy": 0.963882618510158,
+      "f1_score": 0.964963503649635,
+      "precision": 0.9565846599131693,
+      "recall": 0.9734904270986745,
+      "roc_auc": 0.9835994675427666
+    },
+    "[Matrix Seq=10] [1:SEMISUPER / 2:SUPERVISED] OC-SVM + XGBoost (Hybrid Gated)": {
+      "accuracy": 0.9503386004514672,
+      "f1_score": 0.9510748702742773,
+      "precision": 0.9574626865671642,
+      "recall": 0.9447717231222386,
+      "roc_auc": 0.9796700464483971
+    },
+    "[Matrix Seq=10] [1:SEMISUPER / 2:SUPERVISED] OC-SVM + SingleGRU (Hybrid Gated)": {
+      "accuracy": 0.9691497366440933,
+      "f1_score": 0.970160116448326,
+      "precision": 0.9589928057553957,
+      "recall": 0.9815905743740795,
+      "roc_auc": 0.9846238812733659
+    },
+    "[Matrix Seq=10] [1:SEMISUPER / 2:SUPERVISED] iForest + XGBoost (Hybrid Gated)": {
+      "accuracy": 0.9556057185854026,
+      "f1_score": 0.9561989606533037,
+      "precision": 0.9640718562874252,
+      "recall": 0.9484536082474226,
+      "roc_auc": 0.9802081681205392
+    },
+    "[Matrix Seq=10] [1:SEMISUPER / 2:SUPERVISED] iForest + SingleGRU (Hybrid Gated)": {
+      "accuracy": 0.9691497366440933,
+      "f1_score": 0.9698972099853157,
+      "precision": 0.9670571010248902,
+      "recall": 0.9727540500736377,
+      "roc_auc": 0.9832267474793248
+    }
+  },
+  "2_leave_one_group_out": {
+    "[Matrix Seq=10] [1:UNSUPER / 2:SUPERVISED] AE + XGBoost (Hybrid Gated)": {
+      "accuracy": 0.7035246141477075,
+      "f1_score": 0.7089456018920596,
+      "precision": 0.7780800615352851,
+      "recall": 0.7690565104020781,
+      "roc_auc": 0.8218785066933008
+    },
+    "[Matrix Seq=10] [1:UNSUPER / 2:SUPERVISED] AE + SingleGRU (Hybrid Gated)": {
+      "accuracy": 0.6700568780018135,
+      "f1_score": 0.6928267717662653,
+      "precision": 0.7530594236562058,
+      "recall": 0.7763561191549991,
+      "roc_auc": 0.7853186776902644
+    },
+    "[Matrix Seq=10] [1:SEMISUPER / 2:SUPERVISED] OC-SVM + XGBoost (Hybrid Gated)": {
+      "accuracy": 0.6509303028240292,
+      "f1_score": 0.6832489996388642,
+      "precision": 0.7356524392022045,
+      "recall": 0.7792536016578964,
+      "roc_auc": 0.8140212782655445
+    },
+    "[Matrix Seq=10] [1:SEMISUPER / 2:SUPERVISED] OC-SVM + SingleGRU (Hybrid Gated)": {
+      "accuracy": 0.6568072729602272,
+      "f1_score": 0.683557000363753,
+      "precision": 0.745966168590955,
+      "recall": 0.77298929690629,
+      "roc_auc": 0.7399088692843934
+    },
+    "[Matrix Seq=10] [1:SEMISUPER / 2:SUPERVISED] iForest + XGBoost (Hybrid Gated)": {
+      "accuracy": 0.7296876358925244,
+      "f1_score": 0.7234164408673112,
+      "precision": 0.8101010327233743,
+      "recall": 0.7481214034544713,
+      "roc_auc": 0.7972539418000638
+    },
+    "[Matrix Seq=10] [1:SEMISUPER / 2:SUPERVISED] iForest + SingleGRU (Hybrid Gated)": {
+      "accuracy": 0.7325012102921467,
+      "f1_score": 0.7185703704567207,
+      "precision": 0.8204658670737311,
+      "recall": 0.7382604004203107,
+      "roc_auc": 0.775733351807883
+    }
+  }
+}

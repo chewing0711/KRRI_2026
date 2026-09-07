@@ -2,13 +2,13 @@
 build_unified_can_context_csv.py (gearbox_final_suite / src / data_processing)
 
 3단계: 16개 디코딩된 CAN 시계열 데이터(data/*_official_decoded.csv)로부터
-사용자가 지정한 슬라이딩 윈도우(500개 샘플 및 250개 샘플) 단위로
-- 30대 CAN 물리 특성 (휠속 통계, 4륜 편차, 차체 거동, 조향각, 페달)
-- 7대 무차원 슬립 비율 및 정규화 특성 (slip_ratio_fl~rr, slip_diff, norm_yaw, norm_lat)
-- 6대 주행 맥락 메타데이터 (state, target, scenario, speed_kph, grade_pct, window_idx)
-를 결합하여 최종 단일 통합 데이터셋(unified_can_context_dataset.csv)을 생성하는 스크립트.
+사용자가 지정한 sliding window 단위로
+- 30대 CAN physical features (wheel speed statistics, 4륜 편차, vehicle dynamics, steering angle, pedals)
+- 7대 dimensionless slip ratio & normalization features (slip_ratio_fl~rr, slip_diff, norm_yaw, norm_lat)
+- 8대 driving context metadata (state, target, scenario, speed_kph, grade_pct, window_idx, start_time_sec, end_time_sec)
+를 결합하여 최종 단일 integrated dataset(unified_can_context_dataset.csv)을 생성하는 스크립트.
 
-총 컬럼 수: 43개 (메타데이터 6개 + 슬립/정규화 7개 + CAN 물리 특성 30개)
+총 columns 수: 45개 (metadata 8개 + slip/정규화 7개 + CAN physical features 30개)
 
 규정 준수:
 - 인위적 데이터 누출(Data Leakage) 및 임의 통계 대입(Imputation) 전면 배제.
@@ -27,6 +27,7 @@ SRC_DIR = os.path.dirname(DATA_PROCESSING_DIR) if "data_processing" in DATA_PROC
 SUITE_DIR = os.path.dirname(SRC_DIR)
 RESULTS_DIR = os.path.join(SUITE_DIR, "results")
 DATA_DIR = os.path.join(SUITE_DIR, "data")
+DATASETS_DIR = os.path.join(RESULTS_DIR, "datasets")
 
 # 시나리오별 목표 속도, 경사도, 표준 시나리오명 매핑 규칙
 SCENARIO_CONTEXT_RULES = {
@@ -49,8 +50,8 @@ SCENARIO_CONTEXT_RULES = {
 
 def extract_unified_window_row(seg, local_idx, state, spd_target, grd_target, scen_clean):
     """
-    단일 윈도우 세그먼트에서 메타데이터(6개) + 슬립/정규화(7개) + CAN 물리 특성(30개)
-    총 43개 컬럼의 1개 행 추출
+    단일 window segment에서 metadata(8개) + slip/정규화(7개) + CAN physical features(30개)
+    총 45개 columns의 1개 행 추출
     """
     fl = seg["WHL_SPD_FL"].values
     fr = seg["WHL_SPD_FR"].values
@@ -132,13 +133,15 @@ def extract_unified_window_row(seg, local_idx, state, spd_target, grd_target, sc
     norm_lat_accel = lat_accel_mean / (grd_target + 1.0)
 
     row = {
-        # [01~06] 메타데이터 (6개)
+        # [01~08] metadata (8개)
         "state": state,
         "target": 1 if state == "abnormal" else 0,
         "scenario": scen_clean,
         "speed_kph": spd_target,
         "grade_pct": grd_target,
         "window_idx": local_idx,
+        "start_time_sec": round(float(seg["Time"].iloc[0]), 4),
+        "end_time_sec": round(float(seg["Time"].iloc[-1]), 4),
 
         # [07~13] 무차원 슬립 비율 및 정규화 특성 (7개)
         "slip_ratio_fl": slip_ratio_fl,
@@ -198,7 +201,7 @@ def extract_unified_window_row(seg, local_idx, state, spd_target, grd_target, sc
     return row
 
 
-def build_unified_dataset_for_window(window_size=500, output_csv=None, cache_csv=None):
+def build_unified_dataset_for_window(window_size=34, output_csv=None, cache_csv=None):
     """지정된 window_size에 대해 3단계 최종 통합 CSV 및 2단계 캐시 CSV를 data/ 폴더에 동시 생성"""
     if output_csv is None:
         output_csv = os.path.join(DATA_DIR, f"unified_can_context_dataset_w{window_size}.csv")
@@ -257,8 +260,8 @@ def build_unified_dataset_for_window(window_size=500, output_csv=None, cache_csv
     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
     df_unified.to_csv(output_csv, index=False, encoding="utf-8-sig")
 
-    # 기본 unified_can_context_dataset.csv (기본 500샘플일 때 복사본 저장)
-    if window_size == 500:
+    # 기본 unified_can_context_dataset.csv (기본 34샘플일 때 복사본 저장)
+    if window_size == 34:
         default_unified_path = os.path.join(DATA_DIR, "unified_can_context_dataset.csv")
         df_unified.to_csv(default_unified_path, index=False, encoding="utf-8-sig")
         print(f" 💾 [기본 Unified CSV 생성 완료] -> {default_unified_path}")
@@ -268,7 +271,7 @@ def build_unified_dataset_for_window(window_size=500, output_csv=None, cache_csv
     os.makedirs(os.path.dirname(cache_csv), exist_ok=True)
     df_cache.to_csv(cache_csv, index=False, encoding="utf-8-sig")
 
-    if window_size == 500:
+    if window_size == 34:
         default_cache_path = os.path.join(DATA_DIR, "multimodal_cache_full.csv")
         df_cache.to_csv(default_cache_path, index=False, encoding="utf-8-sig")
         print(f" 💾 [기본 Cache CSV 생성 완료]   -> {default_cache_path}")
@@ -277,7 +280,7 @@ def build_unified_dataset_for_window(window_size=500, output_csv=None, cache_csv
     print(f" 🎉 [{window_size}샘플] 최종 Unified 데이터셋 완성!")
     print(f" 💾 최종 Unified CSV: {output_csv}")
     print(f"    - 총 데이터 행 수 (윈도우 수) : {len(df_unified):,} 행")
-    print(f"    - 총 데이터 컬럼 수 (Column Count) : {len(df_unified.columns)} 개 (메타 6 + 슬립/정규화 7 + 물리특성 30)")
+    print(f"    - 총 데이터 columns 수 (Column Count) : {len(df_unified.columns)} 개 (metadata 8 + slip/정규화 7 + CAN physical features 30)")
     print(f"    - 전체 컬럼 명세 목록 :")
     for i, col in enumerate(df_unified.columns, start=1):
         print(f"      [{i:02d}] {col}")
@@ -287,35 +290,27 @@ def build_unified_dataset_for_window(window_size=500, output_csv=None, cache_csv
 
 
 def run_all_requested_window_sizes():
-    """500개 샘플 및 250개 샘플 데이터셋 일괄 동시 생성 (전체 data/ 폴더 저장)"""
+    """34샘플(0.1초) 슬라이딩 윈도우 최종 Unified 데이터셋 생성"""
     print("\n" + "#" * 100)
-    print(" 🚀 [전체 일괄 실행] 500샘플 및 250샘플 슬라이딩 윈도우 최종 Unified 데이터셋 생성")
+    print(" 🚀 [전체 일괄 실행] 34샘플(0.1초) 슬라이딩 윈도우 최종 Unified 데이터셋 생성")
     print("#" * 100)
 
-    # 1. 500샘플 데이터셋 생성
-    df_500 = build_unified_dataset_for_window(window_size=500)
-
-    # 2. 250샘플 데이터셋 생성
-    df_250 = build_unified_dataset_for_window(window_size=250)
+    df_34 = build_unified_dataset_for_window(window_size=34)
 
     print("\n" + "=" * 100)
-    print(" 🏆 500샘플 및 250샘플 데이터셋 생성 최종 요약 (저장 위치: data/)")
+    print(" 🏆 34샘플 데이터셋 생성 최종 요약 (저장 위치: data/)")
     print("=" * 100)
-    if df_500 is not None:
-        print(f" 1. 500샘플 (~1.47초 윈도우): 총 {len(df_500):,} 행 x {len(df_500.columns)} 열")
-        print(f"    - Unified 경로: {os.path.join(DATA_DIR, 'unified_can_context_dataset_w500.csv')}")
-        print(f"    - Cache 경로  : {os.path.join(DATA_DIR, 'multimodal_cache_w500.csv')}")
-    if df_250 is not None:
-        print(f" 2. 250샘플 (~0.73초 윈도우): 총 {len(df_250):,} 행 x {len(df_250.columns)} 열")
-        print(f"    - Unified 경로: {os.path.join(DATA_DIR, 'unified_can_context_dataset_w250.csv')}")
-        print(f"    - Cache 경로  : {os.path.join(DATA_DIR, 'multimodal_cache_w250.csv')}")
+    if df_34 is not None:
+        print(f" 1. 34샘플 (~0.10초 윈도우): 총 {len(df_34):,} 행 x {len(df_34.columns)} 열")
+        print(f"    - Unified 경로: {os.path.join(DATA_DIR, 'unified_can_context_dataset_w34.csv')}")
+        print(f"    - Cache 경로  : {os.path.join(DATA_DIR, 'multimodal_cache_w34.csv')}")
     print("=" * 100)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="3단계: 500샘플 및 250샘플 최종 Unified CAN 데이터셋 생성기")
-    parser.add_argument("-w", "--window_size", type=int, default=None, help="특정 슬라이딩 윈도우 크기만 생성 (예: 500 또는 250). 생략 시 500과 250 둘 다 일괄 생성.")
-    parser.add_argument("--all", action="store_true", help="500과 250 둘 다 일괄 생성")
+    parser = argparse.ArgumentParser(description="3단계: 34샘플(0.1초) 최종 Unified CAN 데이터셋 생성기")
+    parser.add_argument("-w", "--window_size", type=int, default=34, help="슬라이딩 윈도우 크기 (기본값: 34)")
+    parser.add_argument("--all", action="store_true", help="일괄 생성 실행")
     args = parser.parse_args()
 
     if args.window_size is not None and not args.all:

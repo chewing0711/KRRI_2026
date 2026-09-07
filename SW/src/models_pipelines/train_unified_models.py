@@ -39,6 +39,7 @@ import joblib
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import cosine
+from tqdm import tqdm
 
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
@@ -53,18 +54,15 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
-
-DATA_PROCESSING_DIR = os.path.dirname(os.path.abspath(__file__))
-SRC_DIR = os.path.dirname(DATA_PROCESSING_DIR) if "models_pipelines" in DATA_PROCESSING_DIR else DATA_PROCESSING_DIR
+SRC_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SUITE_DIR = os.path.dirname(SRC_DIR)
-DATA_DIR = os.path.join(SUITE_DIR, "data")
 RESULTS_DIR = os.path.join(SUITE_DIR, "results")
-METRICS_DIR = os.path.join(RESULTS_DIR, "metrics")
+DATA_DIR = os.path.join(SUITE_DIR, "data")
 MODELS_DIR = os.path.join(SUITE_DIR, "models")
+METRICS_DIR = os.path.join(RESULTS_DIR, "metrics")
 REPORTS_DIR = os.path.join(RESULTS_DIR, "reports")
 
-# data_processing 모듈 경로 등록 및 시계열 행렬 빌더 임포트
-sys.path.append(os.path.join(SRC_DIR, "data_processing"))
+sys.path.append(os.path.join(SUITE_DIR, "src", "data_processing"))
 from sequence_matrix_builder import (
     create_sliding_sequence_tensor,
     create_flattened_lag_matrix,
@@ -283,18 +281,104 @@ def export_multimodal_hybrid_models(X_can, X_audio, y, can_feature_cols, audio_f
 
     w_suffix = f"_w{window_label}"
 
+    # 오디오 피처가 없으면 CAN 전용 모델만 저장
+    if X_audio.shape[1] == 0:
+        print("[EXPORT] 오디오 피처가 없으므로 CAN 전용 모델을 저장합니다.")
+        # 1. CAN 스케일러 저장
+        scaler_can = StandardScaler()
+        X_can_s = scaler_can.fit_transform(X_can)
+        scaler_can_path = os.path.join(MODELS_DIR, f"scaler_can{w_suffix}.pkl")
+        joblib.dump(scaler_can, scaler_can_path)
+        print(f"  [EXPORT] 1. CAN 전처리 스케일러 저장 완료    : {os.path.basename(scaler_can_path)}")
+
+        # 2. Step 1 비지도 모델군 (CAN Normal y==0 만 사용)
+        X_can_norm = X_can_s[y == 0]
+
+        oc_svm = OneClassSVM(kernel="rbf", gamma="scale", nu=0.05).fit(X_can_norm)
+        oc_path = os.path.join(MODELS_DIR, f"step1_oc_svm{w_suffix}.pkl")
+        joblib.dump(oc_svm, oc_path)
+        print(f"  [EXPORT] 2. Step 1 OC-SVM (CAN 전용) 저장   : {os.path.basename(oc_path)}")
+
+        iforest = IsolationForest(n_estimators=100, contamination=0.05, random_state=42).fit(X_can_norm)
+        if_path = os.path.join(MODELS_DIR, f"step1_iforest{w_suffix}.pkl")
+        joblib.dump(iforest, if_path)
+        print(f"  [EXPORT] 3. Step 1 iForest (CAN 전용) 저장  : {os.path.basename(if_path)}")
+
+        ae_model = train_autoencoder(X_can_norm, epochs=30)
+        ae_path = os.path.join(MODELS_DIR, f"step1_autoencoder{w_suffix}.pt")
+        torch.save(ae_model.state_dict(), ae_path)
+        print(f"  [EXPORT] 4. Step 1 AutoEncoder (CAN) 저장   : {os.path.basename(ae_path)}")
+
+        # Step 1 Anomaly Features 생성
+        oc_dist = oc_svm.decision_function(X_can_s).reshape(-1, 1)
+        ae_err = get_ae_error_feature(ae_model, X_can_s)
+
+        # 3. Step 2 CAN 전용 결합 피처셋: [CAN(43) + Anomaly(1)] = 44개 피처
+        X_ae_can = np.hstack([X_can_s, ae_err])
+        X_oc_can = np.hstack([X_can_s, oc_dist])
+
+        ae_xgb = xgb.XGBClassifier(n_estimators=150, max_depth=4, learning_rate=0.05, random_state=42, eval_metric="logloss", n_jobs=-1)
+        ae_xgb.fit(X_ae_can, y)
+        ae_xgb_path = os.path.join(MODELS_DIR, f"step2_ae_xgboost_can{w_suffix}.pkl")
+        joblib.dump(ae_xgb, ae_xgb_path)
+        print(f"  [EXPORT] 5. Step 2 AE + XGBoost (CAN) 저장  : {os.path.basename(ae_xgb_path)}")
+
+        oc_xgb = xgb.XGBClassifier(n_estimators=150, max_depth=4, learning_rate=0.05, random_state=42, eval_metric="logloss", n_jobs=-1)
+        oc_xgb.fit(X_oc_can, y)
+        oc_xgb_path = os.path.join(MODELS_DIR, f"step2_oc_xgboost_can{w_suffix}.pkl")
+        joblib.dump(oc_xgb, oc_xgb_path)
+        print(f"  [EXPORT] 6. Step 2 OC-SVM + XGBoost (CAN) 저장: {os.path.basename(oc_xgb_path)}")
+
+        ae_gru, _, _ = train_pytorch_seq_model(SingleGRU, X_ae_can, y, epochs=40)
+        ae_gru_path = os.path.join(MODELS_DIR, f"step2_ae_gru_can{w_suffix}.pt")
+        torch.save(ae_gru.state_dict(), ae_gru_path)
+        print(f"  [EXPORT] 7. Step 2 AE + GRU (CAN) 저장      : {os.path.basename(ae_gru_path)}")
+
+        # iForest Anomaly Feature 생성 및 결합
+        if_score = iforest.decision_function(X_can_s).reshape(-1, 1)
+        X_if_can = np.hstack([X_can_s, if_score])
+
+        # 8. OC-SVM + SingleGRU (상위 3위 조합)
+        oc_gru, _, _ = train_pytorch_seq_model(SingleGRU, X_oc_can, y, epochs=40)
+        oc_gru_path = os.path.join(MODELS_DIR, f"step2_oc_gru_can{w_suffix}.pt")
+        torch.save(oc_gru.state_dict(), oc_gru_path)
+        print(f"  [EXPORT] 8. Step 2 OC-SVM + GRU (CAN) 저장  : {os.path.basename(oc_gru_path)}")
+
+        # 9. iForest + XGBoost
+        if_xgb = xgb.XGBClassifier(n_estimators=150, max_depth=4, learning_rate=0.05, random_state=42, eval_metric="logloss", n_jobs=-1)
+        if_xgb.fit(X_if_can, y)
+        if_xgb_path = os.path.join(MODELS_DIR, f"step2_if_xgboost_can{w_suffix}.pkl")
+        joblib.dump(if_xgb, if_xgb_path)
+        print(f"  [EXPORT] 9. Step 2 iForest + XGBoost (CAN) 저장: {os.path.basename(if_xgb_path)}")
+
+        # 10. iForest + SingleGRU (상위 1위 조합)
+        if_gru, _, _ = train_pytorch_seq_model(SingleGRU, X_if_can, y, epochs=40)
+        if_gru_path = os.path.join(MODELS_DIR, f"step2_if_gru_can{w_suffix}.pt")
+        torch.save(if_gru.state_dict(), if_gru_path)
+        print(f"  [EXPORT] 10. Step 2 iForest + GRU (CAN) 저장 : {os.path.basename(if_gru_path)}")
+
+        # 매니페스트 저장
+        manifest = {
+            "window_size": window_label,
+            "fusion_type": "can_only_2step",
+            "can_feature_count": len(can_feature_cols),
+            "audio_feature_count": 0,
+            "total_step2_feature_count": X_ae_can.shape[1],
+            "can_features": can_feature_cols,
+        }
+        manifest_path = os.path.join(MODELS_DIR, f"can_only_manifest{w_suffix}.json")
+        with open(manifest_path, "w", encoding="utf-8") as f:
+            json.dump(manifest, f, indent=2, ensure_ascii=False)
+        print(f"  [EXPORT] 8. CAN 전용 매니페스트 저장 완료    : {os.path.basename(manifest_path)}")
+        print("=" * 120)
+        return
+
     # 1. CAN 스케일러 및 Audio 스케일러 분리 저장
     scaler_can = StandardScaler()
     X_can_s = scaler_can.fit_transform(X_can)
     scaler_can_path = os.path.join(MODELS_DIR, f"scaler_can{w_suffix}.pkl")
     joblib.dump(scaler_can, scaler_can_path)
     print(f"  [EXPORT] 1. CAN 전처리 스케일러 저장 완료    : {os.path.basename(scaler_can_path)}")
-
-    scaler_audio = StandardScaler()
-    X_audio_s = scaler_audio.fit_transform(X_audio)
-    scaler_audio_path = os.path.join(MODELS_DIR, f"scaler_audio{w_suffix}.pkl")
-    joblib.dump(scaler_audio, scaler_audio_path)
-    print(f"  [EXPORT] 2. Audio 전처리 스케일러 저장 완료  : {os.path.basename(scaler_audio_path)}")
 
     # 2. [Step 1 비지도 모델군 훈련 및 저장 - 오직 CAN Normal y==0 만 사용]
     X_can_norm = X_can_s[y == 0]
@@ -377,8 +461,8 @@ def export_multimodal_hybrid_models(X_can, X_audio, y, can_feature_cols, audio_f
 # =========================================================================
 # [종합 벤치마크 평가 메인 루틴]
 # =========================================================================
-def evaluate_multimodal_pipeline(dataset_path, window_size_label="250"):
-    approx_sec = 0.74 if window_size_label == "250" else 1.47
+def evaluate_multimodal_pipeline(dataset_path, window_size_label="34"):
+    approx_sec = 0.10 if window_size_label == "34" else 1.47
     print("\n" + "=" * 120)
     print(f" [요구사항 2, 3: CAN-Audio 멀티모달 2단계 하이브리드 고장 진단 종합 벤치마크] ({window_size_label}샘플 / {approx_sec:.2f}초 윈도우)")
     print(f" 📂 데이터셋 경로: {dataset_path}")
@@ -405,26 +489,26 @@ def evaluate_multimodal_pipeline(dataset_path, window_size_label="250"):
     scenarios = df["scenario"].values if "scenario" in df.columns else np.zeros(len(df))
 
     # =========================================================================
-    # [검증 1] Stratified 5-Fold 교차 검증 (단일 윈도우 1D 원본 vs 5스텝 시계열 Matrix 1:1 대조)
+    # [검증 1] Stratified 5-Fold 교차 검증 (단일 윈도우 1D 원본 vs 10스텝 시계열 Matrix 1:1 대조)
     # =========================================================================
     print("\n" + "-" * 120)
-    print(" [검증 1] Stratified 5-Fold 교차 검증 (5스텝 시계열 Matrix 실측 평가)")
+    print(" [검증 1] Stratified 5-Fold 교차 검증 (10스텝 시계열 Matrix 실측 평가)")
     print("-" * 120)
 
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
     model_names_matrix = [
         # 1. 1단계 UNSUPER (AE) 기반 조합들
-        "[Matrix Seq=5] [1:UNSUPER / 2:SUPERVISED] AE + XGBoost (Hybrid Gated)",
-        "[Matrix Seq=5] [1:UNSUPER / 2:SUPERVISED] AE + SingleGRU (Hybrid Gated)",
+        "[Matrix Seq=10] [1:UNSUPER / 2:SUPERVISED] AE + XGBoost (Hybrid Gated)",
+        "[Matrix Seq=10] [1:UNSUPER / 2:SUPERVISED] AE + SingleGRU (Hybrid Gated)",
 
         # 2. 1단계 SEMI SUPER (OC-SVM) 기반 조합들
-        "[Matrix Seq=5] [1:SEMISUPER / 2:SUPERVISED] OC-SVM + XGBoost (Hybrid Gated)",
-        "[Matrix Seq=5] [1:SEMISUPER / 2:SUPERVISED] OC-SVM + SingleGRU (Hybrid Gated)",
+        "[Matrix Seq=10] [1:SEMISUPER / 2:SUPERVISED] OC-SVM + XGBoost (Hybrid Gated)",
+        "[Matrix Seq=10] [1:SEMISUPER / 2:SUPERVISED] OC-SVM + SingleGRU (Hybrid Gated)",
 
         # 3. 1단계 SEMI SUPER (iForest) 기반 조합들
-        "[Matrix Seq=5] [1:SEMISUPER / 2:SUPERVISED] iForest + XGBoost (Hybrid Gated)",
-        "[Matrix Seq=5] [1:SEMISUPER / 2:SUPERVISED] iForest + SingleGRU (Hybrid Gated)",
+        "[Matrix Seq=10] [1:SEMISUPER / 2:SUPERVISED] iForest + XGBoost (Hybrid Gated)",
+        "[Matrix Seq=10] [1:SEMISUPER / 2:SUPERVISED] iForest + SingleGRU (Hybrid Gated)",
     ]
 
     cv_results_matrix = {m: {"acc": [], "f1": [], "prec": [], "rec": [], "auc": []} for m in model_names_matrix}
@@ -432,7 +516,7 @@ def evaluate_multimodal_pipeline(dataset_path, window_size_label="250"):
 
     session_series = df["session_id"] if "session_id" in df.columns else df["scenario"]
 
-    for fold_idx, (tr_idx, te_idx) in enumerate(skf.split(X_can, y), start=1):
+    for fold_idx, (tr_idx, te_idx) in enumerate(tqdm(skf.split(X_can, y), total=skf.get_n_splits(), desc="Folds"), start=1):
         X_can_tr, X_can_te = X_can[tr_idx], X_can[te_idx]
         X_aud_tr, X_aud_te = X_audio[tr_idx], X_audio[te_idx]
         y_tr, y_te = y[tr_idx], y[te_idx]
@@ -447,9 +531,14 @@ def evaluate_multimodal_pipeline(dataset_path, window_size_label="250"):
         X_c_tr_s = scaler_c.fit_transform(X_can_tr)
         X_c_te_s = scaler_c.transform(X_can_te)
 
-        scaler_a = StandardScaler()
-        X_a_tr_s = scaler_a.fit_transform(X_aud_tr)
-        X_a_te_s = scaler_a.transform(X_aud_te)
+        # Audio 스케일링: 오디오 피처가 있으면 수행, 없으면 빈 배열 유지
+        if X_audio.shape[1] > 0:
+            scaler_a = StandardScaler()
+            X_a_tr_s = scaler_a.fit_transform(X_aud_tr)
+            X_a_te_s = scaler_a.transform(X_aud_te)
+        else:
+            X_a_tr_s = np.zeros((X_aud_tr.shape[0], 0))
+            X_a_te_s = np.zeros((X_aud_te.shape[0], 0))
 
         # 2. Step 1 비지도 이상 탐지 (오직 CAN Normal y_tr==0 만 사용)
         X_c_tr_norm = X_c_tr_s[y_tr == 0]
@@ -480,19 +569,19 @@ def evaluate_multimodal_pipeline(dataset_path, window_size_label="250"):
         X_te_if_multi = np.hstack([X_c_te_s, te_if_score, X_a_te_s])
 
         # ---------------------------------------------------------------------
-        # [B] 5스텝 시계열 Matrix (Seq_Len=5) 3D 텐서 및 지연 피처 평가
+        # [B] 10스텝 시계열 Matrix (Seq_Len=10) 3D 텐서 및 지연 피처 평가
         # ---------------------------------------------------------------------
-        # 3D 텐서 변환 [N_seq, 5, Features]
-        X_tr_ae_mat, y_tr_seq = create_sliding_sequence_tensor(X_tr_ae_multi, y_tr, session_ids=sess_tr, seq_len=5)
-        X_te_ae_mat, y_te_seq = create_sliding_sequence_tensor(X_te_ae_multi, y_te, session_ids=sess_te, seq_len=5)
+        # 3D 텐서 변환 [N_seq, 10, Features]
+        X_tr_ae_mat, y_tr_seq = create_sliding_sequence_tensor(X_tr_ae_multi, y_tr, session_ids=sess_tr, seq_len=10)
+        X_te_ae_mat, y_te_seq = create_sliding_sequence_tensor(X_te_ae_multi, y_te, session_ids=sess_te, seq_len=10)
 
-        X_tr_oc_mat, _ = create_sliding_sequence_tensor(X_tr_oc_multi, y_tr, session_ids=sess_tr, seq_len=5)
-        X_te_oc_mat, _ = create_sliding_sequence_tensor(X_te_oc_multi, y_te, session_ids=sess_te, seq_len=5)
+        X_tr_oc_mat, _ = create_sliding_sequence_tensor(X_tr_oc_multi, y_tr, session_ids=sess_tr, seq_len=10)
+        X_te_oc_mat, _ = create_sliding_sequence_tensor(X_te_oc_multi, y_te, session_ids=sess_te, seq_len=10)
 
-        X_tr_if_mat, _ = create_sliding_sequence_tensor(X_tr_if_multi, y_tr, session_ids=sess_tr, seq_len=5)
-        X_te_if_mat, _ = create_sliding_sequence_tensor(X_te_if_multi, y_te, session_ids=sess_te, seq_len=5)
+        X_tr_if_mat, _ = create_sliding_sequence_tensor(X_tr_if_multi, y_tr, session_ids=sess_tr, seq_len=10)
+        X_te_if_mat, _ = create_sliding_sequence_tensor(X_te_if_multi, y_te, session_ids=sess_te, seq_len=10)
 
-        # 2D 지연 피처 변환 [N_seq, 5 * 58 = 290]
+        # 2D 지연 피처 변환 [N_seq, 10 * 58 = 580]
         X_tr_ae_lag = X_tr_ae_mat.reshape(len(X_tr_ae_mat), -1)
         X_te_ae_lag = X_te_ae_mat.reshape(len(X_te_ae_mat), -1)
 
@@ -531,7 +620,7 @@ def evaluate_multimodal_pipeline(dataset_path, window_size_label="250"):
             p_raw, pr_raw = mat_xgb_ae.predict(X_te_ae_lag), mat_xgb_ae.predict_proba(X_te_ae_lag)[:, 1]
             p_final = np.where(ae_gated_normal, 0, np.where(ae_gated_abnormal, 1, p_raw))
             pr_final = np.where(ae_gated_normal, 0.0, np.where(ae_gated_abnormal, 1.0, pr_raw))
-            m_name = "[Matrix Seq=5] [1:UNSUPER / 2:SUPERVISED] AE + XGBoost (Hybrid Gated)"
+            m_name = "[Matrix Seq=10] [1:UNSUPER / 2:SUPERVISED] AE + XGBoost (Hybrid Gated)"
             cv_results_matrix[m_name]["acc"].append(accuracy_score(y_te_seq, p_final))
             cv_results_matrix[m_name]["f1"].append(f1_score(y_te_seq, p_final, zero_division=0))
             cv_results_matrix[m_name]["prec"].append(precision_score(y_te_seq, p_final, zero_division=0))
@@ -542,7 +631,7 @@ def evaluate_multimodal_pipeline(dataset_path, window_size_label="250"):
             _, p_raw, pr_raw = train_pytorch_seq_model(SingleGRU, X_tr_ae_mat, y_tr_seq, X_te_ae_mat, epochs=25)
             p_final = np.where(ae_gated_normal, 0, np.where(ae_gated_abnormal, 1, p_raw))
             pr_final = np.where(ae_gated_normal, 0.0, np.where(ae_gated_abnormal, 1.0, pr_raw))
-            m_name = "[Matrix Seq=5] [1:UNSUPER / 2:SUPERVISED] AE + SingleGRU (Hybrid Gated)"
+            m_name = "[Matrix Seq=10] [1:UNSUPER / 2:SUPERVISED] AE + SingleGRU (Hybrid Gated)"
             cv_results_matrix[m_name]["acc"].append(accuracy_score(y_te_seq, p_final))
             cv_results_matrix[m_name]["f1"].append(f1_score(y_te_seq, p_final, zero_division=0))
             cv_results_matrix[m_name]["prec"].append(precision_score(y_te_seq, p_final, zero_division=0))
@@ -561,7 +650,7 @@ def evaluate_multimodal_pipeline(dataset_path, window_size_label="250"):
             p_raw, pr_raw = mat_xgb_oc.predict(X_te_oc_lag), mat_xgb_oc.predict_proba(X_te_oc_lag)[:, 1]
             p_final = np.where(oc_gated_normal, 0, np.where(oc_gated_abnormal, 1, p_raw))
             pr_final = np.where(oc_gated_normal, 0.0, np.where(oc_gated_abnormal, 1.0, pr_raw))
-            m_name = "[Matrix Seq=5] [1:SEMISUPER / 2:SUPERVISED] OC-SVM + XGBoost (Hybrid Gated)"
+            m_name = "[Matrix Seq=10] [1:SEMISUPER / 2:SUPERVISED] OC-SVM + XGBoost (Hybrid Gated)"
             cv_results_matrix[m_name]["acc"].append(accuracy_score(y_te_seq, p_final))
             cv_results_matrix[m_name]["f1"].append(f1_score(y_te_seq, p_final, zero_division=0))
             cv_results_matrix[m_name]["prec"].append(precision_score(y_te_seq, p_final, zero_division=0))
@@ -572,7 +661,7 @@ def evaluate_multimodal_pipeline(dataset_path, window_size_label="250"):
             _, p_raw, pr_raw = train_pytorch_seq_model(SingleGRU, X_tr_oc_mat, y_tr_seq, X_te_oc_mat, epochs=25)
             p_final = np.where(oc_gated_normal, 0, np.where(oc_gated_abnormal, 1, p_raw))
             pr_final = np.where(oc_gated_normal, 0.0, np.where(oc_gated_abnormal, 1.0, pr_raw))
-            m_name = "[Matrix Seq=5] [1:SEMISUPER / 2:SUPERVISED] OC-SVM + SingleGRU (Hybrid Gated)"
+            m_name = "[Matrix Seq=10] [1:SEMISUPER / 2:SUPERVISED] OC-SVM + SingleGRU (Hybrid Gated)"
             cv_results_matrix[m_name]["acc"].append(accuracy_score(y_te_seq, p_final))
             cv_results_matrix[m_name]["f1"].append(f1_score(y_te_seq, p_final, zero_division=0))
             cv_results_matrix[m_name]["prec"].append(precision_score(y_te_seq, p_final, zero_division=0))
@@ -591,7 +680,7 @@ def evaluate_multimodal_pipeline(dataset_path, window_size_label="250"):
             p_raw, pr_raw = mat_xgb_if.predict(X_te_if_lag), mat_xgb_if.predict_proba(X_te_if_lag)[:, 1]
             p_final = np.where(if_gated_normal, 0, np.where(if_gated_abnormal, 1, p_raw))
             pr_final = np.where(if_gated_normal, 0.0, np.where(if_gated_abnormal, 1.0, pr_raw))
-            m_name = "[Matrix Seq=5] [1:SEMISUPER / 2:SUPERVISED] iForest + XGBoost (Hybrid Gated)"
+            m_name = "[Matrix Seq=10] [1:SEMISUPER / 2:SUPERVISED] iForest + XGBoost (Hybrid Gated)"
             cv_results_matrix[m_name]["acc"].append(accuracy_score(y_te_seq, p_final))
             cv_results_matrix[m_name]["f1"].append(f1_score(y_te_seq, p_final, zero_division=0))
             cv_results_matrix[m_name]["prec"].append(precision_score(y_te_seq, p_final, zero_division=0))
@@ -602,7 +691,7 @@ def evaluate_multimodal_pipeline(dataset_path, window_size_label="250"):
             _, p_raw, pr_raw = train_pytorch_seq_model(SingleGRU, X_tr_if_mat, y_tr_seq, X_te_if_mat, epochs=25)
             p_final = np.where(if_gated_normal, 0, np.where(if_gated_abnormal, 1, p_raw))
             pr_final = np.where(if_gated_normal, 0.0, np.where(if_gated_abnormal, 1.0, pr_raw))
-            m_name = "[Matrix Seq=5] [1:SEMISUPER / 2:SUPERVISED] iForest + SingleGRU (Hybrid Gated)"
+            m_name = "[Matrix Seq=10] [1:SEMISUPER / 2:SUPERVISED] iForest + SingleGRU (Hybrid Gated)"
             cv_results_matrix[m_name]["acc"].append(accuracy_score(y_te_seq, p_final))
             cv_results_matrix[m_name]["f1"].append(f1_score(y_te_seq, p_final, zero_division=0))
             cv_results_matrix[m_name]["prec"].append(precision_score(y_te_seq, p_final, zero_division=0))
@@ -624,93 +713,114 @@ def evaluate_multimodal_pipeline(dataset_path, window_size_label="250"):
     mean_leakage = float(np.mean(leakage_sims))
     print(f"\n * Rule 4 데이터 유출 감사: 5-Fold 평균 Train-Test 코사인 유사도 = {mean_leakage:.4f} (< 0.15 정상 무결)")
 
-    # =========================================================================
-    # [검증 2] 미학습 속도 도메인 일반화 검증 (Hold-Out Unseen 60kph Test)
-    # =========================================================================
-    print("\n" + "-" * 120)
-    print(" [검증 2] 미학습 속도 도메인 일반화 검증 (Hold-Out Unseen 60kph 평가: 20k/80k 학습 -> 60k 테스트)")
-    print("-" * 120)
-
-    is_60k = df["scenario"].str.contains("60kph")
-    is_train_pool = df["scenario"].str.contains("20kph") | df["scenario"].str.contains("80kph")
-
-    df_ho_tr = df[is_train_pool]
-    df_ho_te = df[is_60k]
-
-    X_ho_c_tr = df_ho_tr[can_feature_cols].values
-    X_ho_a_tr = df_ho_tr[audio_feature_cols].values
-    y_ho_tr = df_ho_tr["label"].values if "label" in df_ho_tr.columns else (df_ho_tr["state"].str.lower() == "abnormal").astype(int).values
-
-    X_ho_c_te = df_ho_te[can_feature_cols].values
-    X_ho_a_te = df_ho_te[audio_feature_cols].values
-    y_ho_te = df_ho_te["label"].values if "label" in df_ho_te.columns else (df_ho_te["state"].str.lower() == "abnormal").astype(int).values
-
-    scaler_ho_c = StandardScaler().fit(X_ho_c_tr)
-    X_ho_c_tr_s = scaler_ho_c.transform(X_ho_c_tr)
-    X_ho_c_te_s = scaler_ho_c.transform(X_ho_c_te)
-
-    scaler_ho_a = StandardScaler().fit(X_ho_a_tr)
-    X_ho_a_tr_s = scaler_ho_a.transform(X_ho_a_tr)
-    X_ho_a_te_s = scaler_ho_a.transform(X_ho_a_te)
-
-    # 1. CAN 단독 모델
-    ho_xgb_can = xgb.XGBClassifier(n_estimators=150, max_depth=4, learning_rate=0.05, random_state=42, eval_metric="logloss").fit(X_ho_c_tr_s, y_ho_tr)
-    p_ho_can = ho_xgb_can.predict(X_ho_c_te_s)
-    acc_ho_can = accuracy_score(y_ho_te, p_ho_can)
-    f1_ho_can = f1_score(y_ho_te, p_ho_can, zero_division=0)
-
-    # 2. CAN + Audio 멀티모달 보조 융합 모델
-    X_ho_multi_tr = np.hstack([X_ho_c_tr_s, X_ho_a_tr_s])
-    X_ho_multi_te = np.hstack([X_ho_c_te_s, X_ho_a_te_s])
-
-    ho_xgb_multi = xgb.XGBClassifier(n_estimators=150, max_depth=4, learning_rate=0.05, random_state=42, eval_metric="logloss").fit(X_ho_multi_tr, y_ho_tr)
-    p_ho_multi = ho_xgb_multi.predict(X_ho_multi_te)
-    acc_ho_multi = accuracy_score(y_ho_te, p_ho_multi)
-    f1_ho_multi = f1_score(y_ho_te, p_ho_multi, zero_division=0)
-
-    print(f" * 학습 데이터셋 크기 (20kph + 80kph)  : {len(df_ho_tr):,} 개 윈도우")
-    print(f" * 미학습 테스트 크기 (Unseen 60kph)    : {len(df_ho_te):,} 개 윈도우")
-    print(f" * [CAN 단독 모델]   60kph 일반화 정확도 : {acc_ho_can*100:.2f}% | F1-Score: {f1_ho_can*100:.2f}%")
-    print(f" * [CAN+Audio 멀티모달] 60kph 일반화 정확도 : {acc_ho_multi*100:.2f}% | F1-Score: {f1_ho_multi*100:.2f}%")
-    delta_f1 = (f1_ho_multi - f1_ho_can) * 100.0
-    print(f" * >> 오디오 보조 피처 결합에 따른 미학습 도메인 F1 개선도: {delta_f1:+.2f}%p")
-
-    # =========================================================================
-    # [검증 3] 실시간 추론 연산 지표 전수 벤치마크 (KPI 2.5 만족도 검증)
-    # =========================================================================
-    print("\n" + "-" * 120)
-    print(" [검증 3] 실시간 추론 연산 성능 전수 벤치마크 (KPI 2.5: 단일 윈도우 0.74초 대비 지연시간 ms 및 Throughput)")
-    print("-" * 120)
-
-    # 전수 모델 인스턴스 준비
-    X_can_full_s = scaler_c.transform(X_can)
-    X_aud_full_s = scaler_a.transform(X_audio)
-    X_can_norm_full = X_can_full_s[y == 0]
-
-    ae_full = train_autoencoder(X_can_norm_full, epochs=15)
-    err_full = get_ae_error_feature(ae_full, X_can_full_s)
-    x_ae_multi = np.hstack([X_can_full_s, err_full, X_aud_full_s])
-
-    xgb_ae = xgb.XGBClassifier(n_estimators=150, max_depth=4, learning_rate=0.05, random_state=42).fit(x_ae_multi, y)
-    gru_ae, _, _ = train_pytorch_seq_model(SingleGRU, x_ae_multi, y, epochs=10)
-
-    bench_targets = [
-        ("1. [2-Step] AutoEncoder + XGBoost", xgb_ae, x_ae_multi, False, True, ae_full, True),
-        ("2. [2-Step] AutoEncoder + SingleGRU", gru_ae, x_ae_multi, True, True, ae_full, True),
-    ]
+#    # =========================================================================
+#    # [검증 2] 미학습 속도 도메인 일반화 검증 (Hold-Out Unseen 60kph Test)
+#    # =========================================================================
+#    print("\n" + "-" * 120)
+#    print(" [검증 2] 미학습 속도 도메인 일반화 검증 (Hold-Out Unseen 60kph 평가: 20k/80k 학습 -> 60k 테스트)")
+#    print("-" * 120)
+#
+#    is_60k = df["scenario"].str.contains("60kph")
+#    is_train_pool = df["scenario"].str.contains("20kph") | df["scenario"].str.contains("80kph")
+#
+#    df_ho_tr = df[is_train_pool]
+#    df_ho_te = df[is_60k]
+#
+#    X_ho_c_tr = df_ho_tr[can_feature_cols].values
+#    X_ho_a_tr = df_ho_tr[audio_feature_cols].values
+#    y_ho_tr = df_ho_tr["label"].values if "label" in df_ho_tr.columns else (df_ho_tr["state"].str.lower() == "abnormal").astype(int).values
+#
+#    X_ho_c_te = df_ho_te[can_feature_cols].values
+#    X_ho_a_te = df_ho_te[audio_feature_cols].values
+#    y_ho_te = df_ho_te["label"].values if "label" in df_ho_te.columns else (df_ho_te["state"].str.lower() == "abnormal").astype(int).values
+#
+#    scaler_ho_c = StandardScaler().fit(X_ho_c_tr)
+#    X_ho_c_tr_s = scaler_ho_c.transform(X_ho_c_tr)
+#    X_ho_c_te_s = scaler_ho_c.transform(X_ho_c_te)
+#
+#    # Audio scaling only if audio features exist
+#    if X_ho_a_tr.shape[1] > 0:
+#        scaler_ho_a = StandardScaler().fit(X_ho_a_tr)
+#        X_ho_a_tr_s = scaler_ho_a.transform(X_ho_a_tr)
+#        X_ho_a_te_s = scaler_ho_a.transform(X_ho_a_te)
+#        multimodal_exists = True
+#    else:
+#        # No audio features; create empty arrays
+#        X_ho_a_tr_s = np.empty((X_ho_a_tr.shape[0], 0))
+#        X_ho_a_te_s = np.empty((X_ho_a_te.shape[0], 0))
+#        multimodal_exists = False
+#
+#    # 1. CAN 단독 모델
+#    ho_xgb_can = xgb.XGBClassifier(n_estimators=150, max_depth=4, learning_rate=0.05, random_state=42, eval_metric="logloss").fit(X_ho_c_tr_s, y_ho_tr)
+#    p_ho_can = ho_xgb_can.predict(X_ho_c_te_s)
+#    acc_ho_can = accuracy_score(y_ho_te, p_ho_can)
+#    f1_ho_can = f1_score(y_ho_te, p_ho_can, zero_division=0)
+#
+#    # 2. CAN + Audio 멀티모달 보조 융합 모델 (audio features may be absent)
+#    if multimodal_exists:
+#        X_ho_multi_tr = np.hstack([X_ho_c_tr_s, X_ho_a_tr_s])
+#        X_ho_multi_te = np.hstack([X_ho_c_te_s, X_ho_a_te_s])
+#        ho_xgb_multi = xgb.XGBClassifier(n_estimators=150, max_depth=4, learning_rate=0.05, random_state=42, eval_metric="logloss").fit(X_ho_multi_tr, y_ho_tr)
+#        p_ho_multi = ho_xgb_multi.predict(X_ho_multi_te)
+#        acc_ho_multi = accuracy_score(y_ho_te, p_ho_multi)
+#        f1_ho_multi = f1_score(y_ho_te, p_ho_multi, zero_division=0)
+#    else:
+#        acc_ho_multi = np.nan
+#        f1_ho_multi = np.nan
+#
+#    print(f" * 학습 데이터셋 크기 (20kph + 80kph)  : {len(df_ho_tr):,} 개 윈도우")
+#    print(f" * 미학습 테스트 크기 (Unseen 60kph)    : {len(df_ho_te):,} 개 윈도우")
+#    print(f" * [CAN 단독 모델]   60kph 일반화 정확도 : {acc_ho_can*100:.2f}% | F1-Score: {f1_ho_can*100:.2f}%")
+#    if not np.isnan(acc_ho_multi):
+#        print(f" * [CAN+Audio 멀티모달] 60kph 일반화 정확도 : {acc_ho_multi*100:.2f}% | F1-Score: {f1_ho_multi*100:.2f}%")
+#   #    # 결과 JSON 저장
+#    result_data = {
+#        "dataset_path": dataset_path,
+#        "window_size": window_size_label,
+#        "num_samples": len(df),
+#        "can_features_count": len(can_feature_cols),
+#        "audio_features_count": len(audio_feature_cols),
+#        "total_features_count": len(can_feature_cols) + len(audio_feature_cols),
+#        "cv_5fold_summary_matrix": {
+#            m: {
+#                "accuracy": float(np.mean(cv_results_matrix[m]["acc"])),
+#                "f1_score": float(np.mean(cv_results_matrix[m]["f1"])),
+#                "precision": float(np.mean(cv_results_matrix[m]["prec"])),
+#                "recall": float(np.mean(cv_results_matrix[m]["rec"])),
+#                "roc_auc": float(np.mean(cv_results_matrix[m]["auc"]))
+#            }
+#            for m in model_names_matrix
+#        },
+#        "holdout_60kph_unseen_summary": {
+#            "can_only_acc": float(acc_ho_can),
+#            "can_only_f1": float(f1_ho_can),
+#            "multimodal_acc": float(acc_ho_multi),
+#            "multimodal_f1": float(f1_ho_multi),
+#            "f1_improvement_pct": float(delta_f1),
+#        },
+#        "latency_summary": latency_summary,
+#    }
+#
+#    out_json = os.path.join(METRICS_DIR, f"multimodal_hybrid_benchmark_summary_w{window_size_label}.json")
+#    with open(out_json, "w", encoding="utf-8") as f:
+#        json.dump(result_data, f, indent=2, ensure_ascii=False)
+#    print(f"\n 종합 멀티모달 벤치마크 메트릭 저장 완료: {out_json}\n")
+#
+#    return result_datae_multi, True, True, ae_full, True),
+#    ]
 
     latency_summary = {}
     print(f" {'모델 및 파이프라인 명칭':<40} | {'평균 지연시간':<15} | {'P99 최대 지연':<15} | {'Throughput (FPS)':<18} | {'KPI (3,000ms) 여유도'}")
     print("-" * 120)
 
-    for name, model_obj, x_data, is_pt, is_pipe, s1_model, is_pt_s1 in bench_targets:
-        perf = benchmark_inference_performance(
-            model_obj, x_data, is_pytorch=is_pt, is_pipeline=is_pipe,
-            step1_model=s1_model, is_pt_step1=is_pt_s1, can_dim=X_can.shape[1]
-        )
-        latency_summary[name] = perf
-        margin = float(3000.0 / perf['mean_latency_ms']) if perf['mean_latency_ms'] > 0 else 0.0
-        print(f" {name:<40} | {perf['mean_latency_ms']:>10.3f} ms | {perf['p99_latency_ms']:>10.3f} ms | {perf['throughput_fps']:>14.1f} FPS | {margin:>12.0f}배 빠름")
+#    for name, model_obj, x_data, is_pt, is_pipe, s1_model, is_pt_s1 in tqdm(bench_targets, desc="Benchmark models"):
+#        perf = benchmark_inference_performance(
+#            model_obj, x_data, is_pytorch=is_pt, is_pipeline=is_pipe,
+#            step1_model=s1_model, is_pt_step1=is_pt_s1, can_dim=X_can.shape[1]
+#        )
+#        latency_summary[name] = perf
+#        margin = float(3000.0 / perf['mean_latency_ms']) if perf['mean_latency_ms'] > 0 else 0.0
+#        print(f" {name:<40} | {perf['mean_latency_ms']:>10.3f} ms | {perf['p99_latency_ms']:>10.3f} ms | {perf['throughput_fps']:>14.1f} FPS | {margin:>12.0f}배 빠름")
 
     # =========================================================================
     # [배포] 최상위 모델 디스크 저장 (Export)
@@ -735,13 +845,13 @@ def evaluate_multimodal_pipeline(dataset_path, window_size_label="250"):
             }
             for m in model_names_matrix
         },
-        "holdout_60kph_unseen_summary": {
-            "can_only_acc": float(acc_ho_can),
-            "can_only_f1": float(f1_ho_can),
-            "multimodal_acc": float(acc_ho_multi),
-            "multimodal_f1": float(f1_ho_multi),
-            "f1_improvement_pct": float(delta_f1),
-        },
+#        "holdout_60kph_unseen_summary": {
+#            "can_only_acc": float(acc_ho_can),
+#            "can_only_f1": float(f1_ho_can),
+#            "multimodal_acc": float(acc_ho_multi),
+#            "multimodal_f1": float(f1_ho_multi),
+#            "f1_improvement_pct": float(delta_f1),
+#        },
         "latency_summary": latency_summary,
     }
 
@@ -755,17 +865,42 @@ def evaluate_multimodal_pipeline(dataset_path, window_size_label="250"):
 
 def run_all_multimodal_models():
     parser = argparse.ArgumentParser(description="CAN-Audio 멀티모달 2단계 하이브리드 고장 진단 벤치마크")
-    parser.add_argument("-w", "--window_size", type=str, default="250", choices=["250", "both"], help="평가할 윈도우 크기")
+    parser.add_argument("-w", "--window_size", type=str, default="34", choices=["34", "both"], help="평가할 윈도우 크기")
+    parser.add_argument("-m", "--mode", type=str, default="all", choices=["cv", "export", "all"],
+                        help="실행 모드: cv(CV 평가만), export(모델 저장만), all(둘 다)")
     args = parser.parse_args()
 
-    multimodal_csv_path = os.path.join(DATA_DIR, "unified_multimodal_dataset_w250.csv")
+    multimodal_csv_path = os.path.join(DATA_DIR, "unified_multimodal_dataset_w34.csv")
     if not os.path.exists(multimodal_csv_path):
-        multimodal_csv_path = os.path.join(RESULTS_DIR, "datasets", "unified_multimodal_dataset_w250.csv")
+        multimodal_csv_path = os.path.join(RESULTS_DIR, "datasets", "unified_multimodal_dataset_w34.csv")
 
-    if os.path.exists(multimodal_csv_path):
-        evaluate_multimodal_pipeline(multimodal_csv_path, window_size_label="250")
-    else:
-        print(f"[ERROR] 융합 데이터셋을 찾을 수 없습니다: {multimodal_csv_path}")
+    # 멀티모달 데이터셋이 없으면 CAN 전용 데이터셋을 사용
+    if not os.path.exists(multimodal_csv_path):
+        fallback_path = os.path.join(DATA_DIR, "unified_can_context_dataset_w34.csv")
+        if os.path.exists(fallback_path):
+            print(f"[INFO] 멀티모달 데이터셋이 없으므로 CAN 전용 데이터셋을 사용합니다: {fallback_path}")
+            multimodal_csv_path = fallback_path
+        else:
+            print(f"[ERROR] 융합 데이터셋을 찾을 수 없습니다: {multimodal_csv_path}")
+            return
+
+    if not os.path.exists(multimodal_csv_path):
+        return
+
+    if args.mode in ("cv", "all"):
+        evaluate_multimodal_pipeline(multimodal_csv_path, window_size_label="34")
+
+    if args.mode == "export":
+        # Export 전용: 데이터만 로드하여 모델 저장
+        df = pd.read_csv(multimodal_csv_path)
+        meta_cols = ["state", "label", "target", "scenario", "window_idx", "window_index",
+                     "session_id", "session_file", "raw_scenario", "start_time_sec", "end_time_sec"]
+        audio_feature_cols = [c for c in df.columns if c.startswith("audio_")]
+        can_feature_cols = [c for c in df.columns if c not in meta_cols and not c.startswith("audio_")]
+        X_can = df[can_feature_cols].copy().fillna(0.0).values
+        X_audio = df[audio_feature_cols].copy().fillna(0.0).values if len(audio_feature_cols) > 0 else np.zeros((len(df), 0))
+        y = df["label"].values if "label" in df.columns else (df["target"].values if "target" in df.columns else (df["state"].str.lower() == "abnormal").astype(int).values)
+        export_multimodal_hybrid_models(X_can, X_audio, y, can_feature_cols, audio_feature_cols, window_label="34")
 
 
 if __name__ == "__main__":

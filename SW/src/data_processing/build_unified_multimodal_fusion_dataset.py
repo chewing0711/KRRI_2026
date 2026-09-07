@@ -7,8 +7,8 @@ build_unified_multimodal_fusion_dataset.py (gearbox_final_suite / src / data_pro
    scenario 및 window_index 키를 기준으로 1:1 정밀 내부 결합(Inner Join)
 2. 총 1,617개 윈도우 전수에 대해 결측치(NaN/Inf) 0건 무결성 전수 감사
 3. CAN-Audio 피처 간 상관관계 분석 및 최종 융합 데이터셋 저장:
-   - data/unified_multimodal_dataset_w250.csv
-   - results/datasets/unified_multimodal_dataset_w250.csv
+   - data/unified_multimodal_dataset_w34.csv
+   - results/datasets/unified_multimodal_dataset_w34.csv
 
 규정 준수:
 - Rule 3: 코드 주석 100% 한글, Matplotlib/터미널 영문 라벨.
@@ -31,13 +31,14 @@ REPORTS_DIR = os.path.join(RESULTS_DIR, "reports")
 os.makedirs(DATASETS_DIR, exist_ok=True)
 os.makedirs(REPORTS_DIR, exist_ok=True)
 
-CAN_CSV_PATH = os.path.join(DATA_DIR, "unified_can_context_dataset_w250.csv")
-AUDIO_CSV_PATH = os.path.join(DATA_DIR, "unified_audio_context_dataset_w250.csv")
+CAN_CSV_PATH = os.path.join(DATA_DIR, "unified_can_context_dataset_w34.csv")
+AUDIO_CSV_PATH = os.path.join(DATA_DIR, "unified_audio_context_dataset_w34.csv")
 
 
 def build_multimodal_fusion_dataset():
     print("\n" + "=" * 120)
-    print(" [요구사항 2단계: CAN-Audio 동기화 멀티모달 융합 데이터셋(w250) 구축 및 무결성 감사 시작]")
+
+    print(" [요구사항 2단계: CAN-Audio 동기화 멀티모달 융합 데이터셋(w34) 구축 및 무결성 감사 시작]")
     print("=" * 120)
 
     # 1. 파일 존재 여부 점검
@@ -74,12 +75,12 @@ def build_multimodal_fusion_dataset():
     # Audio 데이터셋 기준 (1,617개 정제 윈도우)
     df_audio["full_scenario"] = df_audio["scenario"]
 
-    # 오디오 전용 피처 컬럼 식별
+    # audio 전용 features columns 식별
     audio_feat_cols = [c for c in df_audio.columns if c.startswith("audio_")]
     audio_sub = df_audio[["full_scenario", "window_index", "start_time_sec", "end_time_sec"] + audio_feat_cols]
 
-    # CAN 전용 피처 컬럼 식별
-    can_drop_cols = ["scenario", "full_scenario", "window_idx", "window_index", "state", "target"]
+    # CAN 전용 features columns 식별
+    can_drop_cols = ["scenario", "full_scenario", "window_idx", "window_index", "state", "target", "start_time_sec", "end_time_sec"]
     can_feat_cols = [c for c in df_can.columns if c not in can_drop_cols]
     can_sub = df_can[["full_scenario", "window_index", "state", "target"] + can_feat_cols]
 
@@ -109,15 +110,13 @@ def build_multimodal_fusion_dataset():
     print("-" * 120)
 
     # 5. 최종 융합 데이터셋 파일 저장
-    out_csv_data = os.path.join(DATA_DIR, "unified_multimodal_dataset_w250.csv")
-    out_csv_results = os.path.join(DATASETS_DIR, "unified_multimodal_dataset_w250.csv")
+    out_csv_data = os.path.join(DATA_DIR, "unified_multimodal_dataset_w34.csv")
+    out_csv_results = os.path.join(DATASETS_DIR, "unified_multimodal_dataset_w34.csv")
 
     df_merged.to_csv(out_csv_data, index=False, encoding="utf-8-sig")
     df_merged.to_csv(out_csv_results, index=False, encoding="utf-8-sig")
 
     print(f"\n [저장 완료]: {out_csv_data}")
     print(f" [복사 완료]: {out_csv_results}\n")
-
-
 if __name__ == "__main__":
     build_multimodal_fusion_dataset()

@@ -1,0 +1,90 @@
+{
+  "1_causal_temporal_split": {
+    "[UNSUPER] AutoEncoder (MSE Threshold)": {
+      "accuracy": 0.6852544910179641,
+      "precision": 0.908675799086758,
+      "recall": 0.4332365747460087,
+      "f1_score": 0.5867321867321867,
+      "roc_auc": 0.8913535285105085
+    },
+    "[SEMISUPER] OC-SVM (Decision Boundary)": {
+      "accuracy": 0.6706586826347305,
+      "precision": 0.9206081081081081,
+      "recall": 0.3955007256894049,
+      "f1_score": 0.5532994923857868,
+      "roc_auc": 0.8665841900655701
+    },
+    "[SEMISUPER] Isolation Forest (Anomaly Score)": {
+      "accuracy": 0.5014970059880239,
+      "precision": 0.6642857142857143,
+      "recall": 0.06748911465892599,
+      "f1_score": 0.1225296442687747,
+      "roc_auc": 0.8439571495548281
+    },
+    "[SUPERVISED] XGBoost (Window)": {
+      "accuracy": 0.9532185628742516,
+      "precision": 0.9491039426523298,
+      "recall": 0.9608127721335269,
+      "f1_score": 0.9549224666426254,
+      "roc_auc": 0.9892913143839042
+    },
+    "[SUPERVISED] XGBoost (Seq=10 Lagged)": {
+      "accuracy": 0.9662921348314607,
+      "precision": 0.9640287769784173,
+      "recall": 0.9710144927536232,
+      "f1_score": 0.9675090252707581,
+      "roc_auc": 0.996348724862375
+    },
+    "[SUPERVISED] SingleGRU (Seq=10)": {
+      "accuracy": 0.9662921348314607,
+      "precision": 0.951048951048951,
+      "recall": 0.9855072463768116,
+      "f1_score": 0.9679715302491103,
+      "roc_auc": 0.9709583192899675
+    }
+  },
+  "2_leave_one_group_out": {
+    "[UNSUPER] AutoEncoder (MSE Threshold)": {
+      "accuracy": 0.5730189217223562,
+      "precision": 0.5482672082964887,
+      "recall": 0.3182610977507558,
+      "f1_score": 0.38888800775213667,
+      "roc_auc": 0.5782842440771415
+    },
+    "[SEMISUPER] OC-SVM (Decision Boundary)": {
+      "accuracy": 0.6677407659011491,
+      "precision": 0.5599491556629271,
+      "recall": 0.33113785122242534,
+      "f1_score": 0.4016098004121401,
+      "roc_auc": 0.5742335665848765
+    },
+    "[SEMISUPER] Isolation Forest (Anomaly Score)": {
+      "accuracy": 0.42049658228258924,
+      "precision": 0.4653824810160052,
+      "recall": 0.07606115375775221,
+      "f1_score": 0.1151454092395604,
+      "roc_auc": 0.4405665665682798
+    },
+    "[SUPERVISED] XGBoost (Window)": {
+      "accuracy": 0.5447073357643923,
+      "precision": 0.5871069521515242,
+      "recall": 0.48243774075018286,
+      "f1_score": 0.49185798075207626,
+      "roc_auc": 0.6419070856751167
+    },
+    "[SUPERVISED] XGBoost (Seq=10 Lagged)": {
+      "accuracy": 0.4918912866978826,
+      "precision": 0.5857396493624096,
+      "recall": 0.42960198165252306,
+      "f1_score": 0.4490414535056339,
+      "roc_auc": 0.6296379262448781
+    },
+    "[SUPERVISED] SingleGRU (Seq=10)": {
+      "accuracy": 0.6592589441230683,
+      "precision": 0.6216383188350917,
+      "recall": 0.5785265757106913,
+      "f1_score": 0.5610500411888121,
+      "roc_auc": 0.7909555273900194
+    }
+  }
+}
