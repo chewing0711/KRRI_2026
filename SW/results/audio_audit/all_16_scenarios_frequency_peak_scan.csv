@@ -1,9 +1,0 @@
-﻿course,normal_file,abnormal_file,normal_fault_peak_freq_hz,normal_fault_peak_db,abnormal_fault_peak_freq_hz,abnormal_fault_peak_db,delta_fault_peak_db,normal_noise_band_db (0-1.5k),abnormal_noise_band_db (0-1.5k),normal_global_peak_freq_hz,abnormal_global_peak_freq_hz
-고속주회로 20kph,record_20-gear-1.wav,go_20-gear-1.wav,2519.4,-132.38,2519.4,-129.71,2.67,-129.0,-129.9,21.5,21.5
-고속주회로 60kph,record_60-gear-1.wav,go_60-gear-1.wav,2002.6,-127.04,2002.6,-121.59,5.45,-122.14,-122.41,21.5,21.5
-고속주회로 80kph,record_80-gear-1.wav,go_80-gear-1.wav,2519.4,-129.18,2670.1,-114.92,14.26,-121.63,-122.38,21.5,43.1
-등판로 6도,record_up_6-gear-1.wav,go_up_6-gear-1.wav,2131.8,-134.34,2476.3,-133.44,0.9,-125.22,-128.72,21.5,0.0
-등판로 12도,record_up_12-gear-1.wav,go_up_12-gear-1_cut.wav,2153.3,-135.02,2497.9,-136.06,-1.04,-128.64,-127.53,0.0,0.0
-등판로 18도,record_up_18-gear-1.wav,go_up_18-gear-1.wav,2131.8,-137.56,2045.7,-134.14,3.42,-126.65,-129.9,0.0,0.0
-등판로 30도,record_up_30-gear-1.wav,go_up_30-gear-1.wav,2153.3,-132.92,2497.9,-132.16,0.76,-129.36,-126.51,0.0,0.0
-원선회로 40kph,record_circle-gear-1.wav,go_up_circle_40-gear-1.wav,2153.3,-133.02,2584.0,-121.94,11.08,-124.06,-123.31,21.5,21.5

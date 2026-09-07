@@ -1,0 +1,81 @@
+argparse-addons==0.12.0
+asttokens @ file:///home/conda/feedstock_root/build_artifacts/asttokens_1783975656336/work
+audioread==3.1.0
+bitstruct==8.22.1
+cantools==42.0.3
+certifi==2026.7.22
+cffi==2.1.1
+charset-normalizer==3.4.9
+comm @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_comm_1753453984/work
+contourpy==1.3.2
+crccheck==1.3.1
+cycler==0.12.1
+debugpy @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_debugpy_1780390171/work
+decorator @ file:///home/conda/feedstock_root/build_artifacts/decorator_1779115150916/work
+exceptiongroup @ file:///home/conda/feedstock_root/build_artifacts/exceptiongroup_1763918002538/work
+executing @ file:///home/conda/feedstock_root/build_artifacts/executing_1756729339227/work
+filelock==3.32.2
+fonttools==4.63.0
+fsspec==2026.7.0
+idna==3.18
+ipykernel @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_ipykernel_1781101665/work
+ipython @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_ipython_1748711175/work
+jedi @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_jedi_1782251948/work
+Jinja2==3.1.6
+joblib @ file:///home/conda/feedstock_root/build_artifacts/joblib_1765794027227/work
+jupyter_client @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_jupyter_client_1781019994/work
+jupyter_core @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_jupyter_core_1760643864/work
+kiwisolver==1.5.0
+lazy-loader==0.5
+librosa==0.11.0
+llvmlite==0.48.0
+MarkupSafe==3.0.3
+matplotlib==3.10.9
+matplotlib-inline @ file:///home/conda/feedstock_root/build_artifacts/matplotlib-inline_1778264321245/work
+mpmath==1.3.0
+msgpack==1.2.1
+nest-asyncio2 @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_nest-asyncio2_1770973502/work
+networkx==3.4.2
+numba @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_numba_1785940717/work
+numpy @ file:///home/conda/feedstock_root/build_artifacts/numpy_1747544638300/work/dist/numpy-2.2.6-cp310-cp310-linux_aarch64.whl#sha256=332ddad3fab679756de94800a0541e7492983cbf1b32c046fba455e17aba25be
+nvidia-nccl-cu12==2.31.2
+packaging @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_packaging_1785888127/work
+pandas @ file:///home/conda/feedstock_root/build_artifacts/pandas_1764614473090/work
+parso @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_parso_1777722955/work
+pexpect @ file:///home/conda/feedstock_root/build_artifacts/pexpect_1733301927746/work
+pickleshare @ file:///home/conda/feedstock_root/build_artifacts/pickleshare_1733327343728/work
+pillow==12.2.0
+platformdirs @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_platformdirs_1786390868/work
+pooch==1.9.0
+prompt_toolkit @ file:///home/conda/feedstock_root/build_artifacts/prompt-toolkit_1785160527032/work
+psutil @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_psutil_1769678160/work
+ptyprocess @ file:///home/conda/feedstock_root/build_artifacts/ptyprocess_1733302279685/work/dist/ptyprocess-0.7.0-py2.py3-none-any.whl#sha256=92c32ff62b5fd8cf325bec5ab90d7be3d2a8ca8c8a3813ff487a8d2002630d1f
+pure_eval @ file:///home/conda/feedstock_root/build_artifacts/pure_eval_1733569405015/work
+pycparser==3.0
+Pygments @ file:///home/conda/feedstock_root/build_artifacts/pygments_1774796700044/work
+pyparsing==3.3.2
+python-can==4.6.1
+python-dateutil @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_python-dateutil_1751104122/work
+pytz @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_pytz_1785077087/work
+pyzmq @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_pyzmq_1779483883/work
+requests==2.34.2
+scikit-learn @ file:///home/conda/feedstock_root/build_artifacts/scikit-learn_1757406016712/work/dist/scikit_learn-1.7.2-cp310-cp310-linux_aarch64.whl#sha256=932e569e078a1c1284c7a5337b40c6fb6f1da63f470265e4180ef7534bd3b4fb
+scipy @ file:///home/conda/feedstock_root/build_artifacts/scipy-split_1739790654670/work/dist/scipy-1.15.2-cp310-cp310-linux_aarch64.whl#sha256=b24843904c3e97381dd8cc65a3fccd452d555627c4f049562fa8900f22cafa94
+six @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_six_1753199211/work
+soundfile==0.14.0
+soxr==1.1.0
+stack_data @ file:///home/conda/feedstock_root/build_artifacts/stack_data_1733569443808/work
+sympy==1.14.0
+textparser==0.26.2
+threadpoolctl @ file:///home/conda/feedstock_root/build_artifacts/threadpoolctl_1741878222898/work
+torch==2.13.0+cpu
+torchvision==0.28.0+cpu
+tornado @ file:///home/conda/feedstock_root/build_artifacts/tornado_1786227554371/work
+tqdm==4.70.0
+traitlets @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_traitlets_1785761789/work
+typing_extensions @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_typing_extensions_1783002732/work
+tzdata @ file:///home/conda/feedstock_root/build_artifacts/python-tzdata_1783704735836/work
+urllib3==2.7.0
+wcwidth @ file:///home/conda/feedstock_root/build_artifacts/wcwidth_1782771721065/work
+wrapt==1.17.3
+xgboost==3.2.0

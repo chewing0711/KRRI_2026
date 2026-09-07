@@ -1,14 +1,10 @@
 """
-sequence_matrix_builder.py (gearbox_final_suite / data_processing)
+sequence_matrix_builder.py (SW/rpi_deploy_package/src)
 
 시계열 행렬(Sequence Matrix) 및 3D 텐서 실시간 변환 전용 모듈:
 1. 세션 경계 격리(Session Boundary Aware) 슬라이딩 윈도우 3D 텐서 생성 (PyTorch RNN/GRU/LSTM용)
 2. 시계열 지연 피처(Flattened Lag Features) 2D 행렬 생성 (XGBoost/RandomForest용)
 3. 실시간 추론용 링버퍼(RealtimeSequenceBuffer) 스트리밍 FIFO 제공
-
-규정 준수:
-- 100% 한글 주석 및 독스트링
-- 데이터 유출(Data Leakage) 100% 방지 (In-Memory 슬라이싱)
 """
 
 import numpy as np
@@ -20,16 +16,6 @@ from torch.utils.data import Dataset
 def create_sliding_sequence_tensor(X, y=None, session_ids=None, seq_len=5):
     """
     2D 피처 행렬을 세션 경계를 보존하며 3D 시계열 텐서 [N_samples, seq_len, n_features]로 변환합니다.
-
-    Args:
-        X (np.ndarray): 2D 피처 행렬 (N, n_features)
-        y (np.ndarray, optional): 1D 라벨 배열 (N,)
-        session_ids (pd.Series or np.ndarray, optional): 세션 식별자 배열 (N,)
-        seq_len (int): 시계열 시퀀스 길이 (기본값: 5)
-
-    Returns:
-        X_seq (np.ndarray): 3D 시계열 텐서 (N_seq, seq_len, n_features)
-        y_seq (np.ndarray, optional): 시퀀스 마지막 시점 기준 라벨 배열 (N_seq,)
     """
     if seq_len <= 1:
         if y is not None:
@@ -53,10 +39,8 @@ def create_sliding_sequence_tensor(X, y=None, session_ids=None, seq_len=5):
                 continue
 
             for i in range(n_sess - seq_len + 1):
-                # [seq_len, n_features] 슬라이스
                 seq_list.append(X_sess[i : i + seq_len])
                 if y_sess is not None:
-                    # 시퀀스의 마지막 윈도우 라벨을 해당 시퀀스의 타겟으로 지정
                     y_list.append(y_sess[i + seq_len - 1])
     else:
         n_samples = len(X)
@@ -83,17 +67,6 @@ def create_sliding_sequence_tensor(X, y=None, session_ids=None, seq_len=5):
 def create_flattened_lag_matrix(X, y=None, session_ids=None, seq_len=5):
     """
     2D 피처 행렬을 5스텝 지연 피처가 결합된 2D 행렬 [N_samples, seq_len * n_features]로 변환합니다.
-    XGBoost 등 트리 기반 모델에서 시계열 맥락을 흡수하기 위해 사용됩니다.
-
-    Args:
-        X (np.ndarray): 2D 피처 행렬 (N, n_features)
-        y (np.ndarray, optional): 1D 라벨 배열 (N,)
-        session_ids (pd.Series or np.ndarray, optional): 세션 식별자 배열 (N,)
-        seq_len (int): 시계열 시퀀스 길이 (기본값: 5)
-
-    Returns:
-        X_flat (np.ndarray): 2D 지연 피처 행렬 (N_seq, seq_len * n_features)
-        y_seq (np.ndarray, optional): 라벨 배열 (N_seq,)
     """
     if y is not None:
         X_seq, y_seq = create_sliding_sequence_tensor(X, y=y, session_ids=session_ids, seq_len=seq_len)
@@ -154,14 +127,13 @@ class RealtimeSequenceBuffer:
         PyTorch 시계열 모델 입력용 3D 텐서 [1, seq_len, n_features]를 반환합니다.
         """
         if not self.is_ready():
-            # 버퍼가 덜 찬 초기에는 첫 윈도우로 패딩
             pad_count = self.seq_len - len(self.buffer)
             pad_feats = [self.buffer[0]] * pad_count if len(self.buffer) > 0 else [np.zeros(self.n_features, dtype=np.float32)] * pad_count
             full_seq = pad_feats + self.buffer
         else:
             full_seq = self.buffer
 
-        return np.array(full_seq, dtype=np.float32)[np.newaxis, :, :] # (1, seq_len, n_features)
+        return np.array(full_seq, dtype=np.float32)[np.newaxis, :, :]
 
     def get_flattened_vector(self):
         """
