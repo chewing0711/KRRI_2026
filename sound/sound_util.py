@@ -2,19 +2,6 @@ import sounddevice as sd
 import numpy as np
 
 
-def check_mic():
-    try:
-        devices = sd.query_devices()
-
-        for device in devices:
-            if device["max_input_channels"] > 0:
-                return True
-
-        raise RuntimeError("사용 가능한 마이크가 없습니다.")
-
-    except RuntimeError as e:
-        print(f"오디오 장치 확인 실패: {e}")
-
 def check_mic_size():
     # RMS 값이 얼마나 되는지 확인용 함수
     """

@@ -120,7 +120,7 @@ def compute_direct_window_features(ws_seg, yr_seg, sas_seg, ab_seg, spd_target, 
         dimless_std, dimless_p2p, dimless_diff_fr_rr_std, pedal_slip_response
     ]
 
-
+# CAN 1s 스니핑해서 메모리에 저장 / 전처리 및 모델 추론
 def can_main():
     parser = argparse.ArgumentParser(description="실시간 CAN 고장 진단 노드")
     parser.add_argument("--interface", type=str, default="socketcan", help="python-can 인터페이스 타입")

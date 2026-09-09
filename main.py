@@ -1,16 +1,35 @@
 from SW.rpi_deploy_package.can_inference import can_main
-from sound.sound_util import check_mic, check_sound
 from sound.sound_main_run import sound_main
 
-if __name__ == "__main__":
-    try:
-        # 마이크 사용 가능 여부 체크
-        check_mic()
-        if not(check_sound()):
-            print("소리의 크기가 너무 작음")
-            raise RuntimeError("마이크가 연결되어 있지 않습니다.")
-            
-        sound_main()
+from concurrent.futures import ThreadPoolExecutor
 
-    except Exception:
-        can_main()
+from custom_exception import SoundNoDevice, CANNoDevice, check_mic#, check_can
+
+def main():
+    try:
+        check_mic()
+        # check_can()
+        
+        with ThreadPoolExecutor(max_workers=2) as executor:
+
+            while True:
+                # can_future = executor.submit(can_1초 수집함수)
+                sound_future = executor.submit(sound_main)
+
+                # can_frame_1s = can_future.result()
+                sound_result, sound_frame_1s = sound_future.result()
+
+
+                # if sound가 abnomarl:
+                #    최종판단 = can 동작 결과(can_frame_1s)
+
+                # ble_send(최종판단, 1초 사운드 프레임)이거 비동기 멀티쓰레드
+
+    except SoundNoDevice as e:
+        print(e)
+
+    except CANNoDevice as e:
+        print(e)
+
+if __name__ == "__main__":
+    main()

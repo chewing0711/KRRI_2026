@@ -1,19 +1,3 @@
-<<<<<<< HEAD
-import sounddevice as sd
-
-def sound_main():
-
-    audio_1s = record_audio()
-    breakpoint()
-
-
-def record_audio(duration=1.0, device=None):
-    if device is None:
-        device = sd.default.device[0]
-
-    device_info = sd.query_devices(device, "input")
-    samplerate = int(device_info["default_samplerate"])
-=======
 """
 sound_main_run.py (git_uploads/sound)
 
@@ -239,7 +223,6 @@ def record_audio(duration=1.0, samplerate=48000, device=None):
 
     if device is None:
         raise RuntimeError("사용 가능한 오디오 입력 장치(마이크)를 찾을 수 없습니다. (WSL 오디오 설정 또는 마이크 연결 확인 필요)")
->>>>>>> origin/pi-sw
 
     audio = sd.rec(
         int(duration * samplerate),
@@ -248,12 +231,6 @@ def record_audio(duration=1.0, samplerate=48000, device=None):
         dtype="float32",
         device=device
     )
-<<<<<<< HEAD
-
-    sd.wait()
-
-    return audio
-=======
     sd.wait()
 
     # 1D 평탄화 (Flatten)
@@ -306,6 +283,5 @@ def sound_main():
     preprocessed_sound_1s = preprocess_sound(audio_1s)
     sound_model_output = sound_preprocess(preprocessed_sound_1s)
 
-    return sound_model_output
+    return sound_model_output, audio_1s
 
->>>>>>> origin/pi-sw
