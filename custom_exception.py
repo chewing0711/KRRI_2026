@@ -1,3 +1,5 @@
+import sounddevice as sd
+
 class SoundNoDevice(Exception):
     pass
 
