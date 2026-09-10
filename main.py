@@ -29,12 +29,16 @@ def main():
 
                 can_frame_1s, relative_time = can_future.result()
                 result, sound_frame_1s = sound_future.result()
-
-                if result: 
-                    print("sound abnormal")
+                
+                # False 정상, True 비정상
+                # 사운드 (0: 정상, 1: 고장)
+                if result['prediction']: 
                     result = inference_can(can_frame_1s)
+                    # 0이 정상, 1이 이상
+                    print(f"CAN 판단: {"Normal" if (result == 0) else "Abnormal"}")
+                    continue
                 #    최종판단 = can 동작 결과(can_frame_1s)
-                print(f"ble send:{result}")
+                print(f"Sound 판단: {result['prediction']}, 정상?")
                 # ble_send(최종판단, 1초 사운드 프레임)이거 비동기 멀티쓰레드
 
     except SoundNoDevice as e:
