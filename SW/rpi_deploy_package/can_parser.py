@@ -11,6 +11,34 @@ CAN_DATA = {
 LOG_INTERVAL = 1
 NEXT_INPUT_TIME = 1
 
+_start_time = None
+
+def collect_can(bus):
+    global _start_time
+
+    while True:
+        msg = bus.recv(timeout=0.1)
+
+        if msg is None:
+            continue
+
+        received_time, can_id_str, data = parser(msg)
+
+        if can_id_str is not None:
+            if _start_time is None:
+                _start_time = received_time
+
+            relative_time = received_time - _start_time
+
+            results_1s = collect_data_from_can(
+                relative_time,
+                can_id_str,
+                data
+            )
+
+            if results_1s is not None:
+                return results_1s, relative_time 
+
 def parser(msg):
     received_time = msg.timestamp
     can_id = hex(msg.arbitration_id)
@@ -21,7 +49,7 @@ def parser(msg):
     else:
         return received_time, None, None
 
-def collect_data(relative_time, can_id, data):
+def collect_data_from_can(relative_time, can_id, data):
     global NEXT_INPUT_TIME, CAN_DATA
 
     results_1s = None
