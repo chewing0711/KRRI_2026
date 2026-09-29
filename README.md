@@ -59,7 +59,7 @@
 
 ## 4. 실행 방법
 
-### ① 송신기 실행 (라즈베리파이)
+### ① 송신기 실행
 
 ```bash
 cd /home/pi/Documents/KRRI_2026
@@ -72,7 +72,7 @@ python ble_server.py
 python main.py
 ```
 
-### ② 수신기 실행 (원격 PC)
+### ② 수신기 실행 
 
 ```bash
 cd /home/team4/Documents/etrl/src
