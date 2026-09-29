@@ -45,7 +45,7 @@ def main():
                 #     ble_send(can_result, sound_frame_1s)
                 #     continue
                 
-                print(f"Sound 판단: {result['prediction']}, 정상?")
+                print(f"Sound 판단: {result['prediction']}, 정상?", flush=True)
                 ble_send(result['prediction'], sound_frame_1s)
 
     except SoundNoDevice as e:

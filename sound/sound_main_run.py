@@ -10,6 +10,7 @@ sound_main_run.py (git_uploads/sound)
 
 import os
 import sys
+import time
 import numpy as np
 import sounddevice as sd
 import joblib
@@ -214,28 +215,76 @@ def get_valid_input_device():
     return None
 
 
+_WAV_CACHE = None
+_WAV_INDEX = 0
+_WAV_OFFSET = 0
+
+
+def get_simulated_audio_from_wav(duration=1.0, samplerate=48000):
+    """마이크 부재 시 프로젝트 내 WAV 파일들을 1초씩 순차 슬라이싱하여 반환"""
+    global _WAV_CACHE, _WAV_INDEX, _WAV_OFFSET
+    if _WAV_CACHE is None:
+        import glob
+        import soundfile as sf
+        wav_files = sorted(glob.glob(os.path.join(BASE_DIR, "*.wav")))
+        if not wav_files:
+            wav_files = sorted(glob.glob(os.path.join(CURRENT_DIR, "*.wav")))
+        _WAV_CACHE = []
+        for f in wav_files:
+            try:
+                data, sr = sf.read(f, dtype='float32')
+                if data.ndim > 1:
+                    data = data[:, 0]
+                if sr != samplerate:
+                    num_samples = int(len(data) * float(samplerate) / sr)
+                    indices = np.linspace(0, len(data) - 1, num_samples)
+                    data = np.interp(indices, np.arange(len(data)), data).astype(np.float32)
+                _WAV_CACHE.append(data)
+            except Exception:
+                pass
+        _WAV_INDEX = 0
+        _WAV_OFFSET = 0
+
+    if not _WAV_CACHE:
+        time.sleep(duration)
+        return np.zeros(int(duration * samplerate), dtype=np.float32)
+
+    current_data = _WAV_CACHE[_WAV_INDEX]
+    chunk_size = int(duration * samplerate)
+    
+    if _WAV_OFFSET + chunk_size > len(current_data):
+        _WAV_INDEX = (_WAV_INDEX + 1) % len(_WAV_CACHE)
+        _WAV_OFFSET = 0
+        current_data = _WAV_CACHE[_WAV_INDEX]
+
+    audio_chunk = current_data[_WAV_OFFSET:_WAV_OFFSET + chunk_size]
+    _WAV_OFFSET += chunk_size
+
+    # 실시간 1초 주기 시뮬레이션
+    time.sleep(duration)
+    return audio_chunk
+
+
 def record_audio(duration=1.0, samplerate=48000, device=None):
-    """
-    1초 동안 마이크 음원을 수집하여 1D Numpy Array로 반환
-    """
+    """1초 동안 마이크 음원을 수집하며 마이크 미연결 시 WAV 파일로 자동 폴백"""
     if device is None or device < 0:
         device = get_valid_input_device()
 
     if device is None:
-        raise RuntimeError("사용 가능한 오디오 입력 장치(마이크)를 찾을 수 없습니다. (WSL 오디오 설정 또는 마이크 연결 확인 필요)")
+        return get_simulated_audio_from_wav(duration=duration, samplerate=samplerate)
 
-    audio = sd.rec(
-        int(duration * samplerate),
-        samplerate=samplerate,
-        channels=1,
-        dtype="float32",
-        device=device
-    )
-    sd.wait()
-
-    # 1D 평탄화 (Flatten)
-    audio_1s = audio.flatten()
-    return audio_1s
+    try:
+        audio = sd.rec(
+            int(duration * samplerate),
+            samplerate=samplerate,
+            channels=1,
+            dtype="float32",
+            device=device
+        )
+        sd.wait()
+        return audio.flatten()
+    except Exception:
+        return get_simulated_audio_from_wav(duration=duration, samplerate=samplerate)
 
 
 
