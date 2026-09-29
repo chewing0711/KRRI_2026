@@ -226,9 +226,11 @@ def get_simulated_audio_from_wav(duration=1.0, samplerate=48000):
     if _WAV_CACHE is None:
         import glob
         import soundfile as sf
-        wav_files = sorted(glob.glob(os.path.join(BASE_DIR, "*.wav")))
+        wav_files = sorted(glob.glob(os.path.join(CURRENT_DIR, "*.wav")))
         if not wav_files:
-            wav_files = sorted(glob.glob(os.path.join(CURRENT_DIR, "*.wav")))
+            wav_files = sorted(glob.glob(os.path.join(BASE_DIR, "sound", "*.wav")))
+        if not wav_files:
+            wav_files = sorted(glob.glob(os.path.join(BASE_DIR, "*.wav")))
         _WAV_CACHE = []
         for f in wav_files:
             try:

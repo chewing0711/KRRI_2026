@@ -195,7 +195,9 @@ def load_all_wav_files(directory: str = None, target_sr: int = 48000):
     import glob
     import soundfile as sf
     if directory is None:
-        directory = os.path.dirname(os.path.abspath(__file__))
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        sound_dir = os.path.join(base_dir, "sound")
+        directory = sound_dir if os.path.exists(sound_dir) else base_dir
     wav_files = sorted(glob.glob(os.path.join(directory, "*.wav")))
     loaded_data = []
     for filepath in wav_files:
