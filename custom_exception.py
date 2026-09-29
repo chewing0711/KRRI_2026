@@ -7,7 +7,6 @@ class CANNoDevice(Exception):
     pass
 
 def check_mic():
-    # try:
     devices = sd.query_devices()
 
     for device in devices:
@@ -17,5 +16,5 @@ def check_mic():
     raise SoundNoDevice("No such device.")
 
 
-# def check_can():
-#     pass
+def check_can():
+    pass
