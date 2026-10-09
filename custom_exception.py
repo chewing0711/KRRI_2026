@@ -17,4 +17,7 @@ def check_mic():
 
 
 def check_can():
-    pass
+    import os
+    if not os.path.exists("/sys/class/net/can0"):
+        raise CANNoDevice("No CAN device detected (can0).")
+    return True

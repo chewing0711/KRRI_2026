@@ -144,33 +144,33 @@ def decode_386(packets):
 
     return results
 
-import pandas as pd
-def save_dataset(dataset):
-
-    # 0x371 - 가속 / 브레이크
-    df_371 = pd.DataFrame(dataset['0x371'])
-    df_371.to_csv(
-        'accel_brake.csv',
-        index=False
-    )
-
-    # 0x220 - 횡가속도 / 요레이트
-    df_220 = pd.DataFrame(dataset['0x220'])
-    df_220.to_csv(
-        'yaw_rate.csv',
-        index=False
-    )
-
-    # 0x2b0 - 조향각 / 조향속도
-    df_2b0 = pd.DataFrame(dataset['0x2b0'])
-    df_2b0.to_csv(
-        'steer_angle_speed.csv',
-        index=False
-    )
-
-    # 0x386 - 네 바퀴 속도
-    df_386 = pd.DataFrame(dataset['0x386'])
-    df_386.to_csv(
-        'wheel_speed.csv',
-        index=False
-    )
+# import pandas as pd
+# def save_dataset(dataset):
+# 
+#     # 0x371 - 가속 / 브레이크
+#     df_371 = pd.DataFrame(dataset['0x371'])
+#     df_371.to_csv(
+#         'accel_brake.csv',
+#         index=False
+#     )
+# 
+#     # 0x220 - 횡가속도 / 요레이트
+#     df_220 = pd.DataFrame(dataset['0x220'])
+#     df_220.to_csv(
+#         'yaw_rate.csv',
+#         index=False
+#     )
+# 
+#     # 0x2b0 - 조향각 / 조향속도
+#     df_2b0 = pd.DataFrame(dataset['0x2b0'])
+#     df_2b0.to_csv(
+#         'steer_angle_speed.csv',
+#         index=False
+#     )
+# 
+#     # 0x386 - 네 바퀴 속도
+#     df_386 = pd.DataFrame(dataset['0x386'])
+#     df_386.to_csv(
+#         'wheel_speed.csv',
+#         index=False
+#     )

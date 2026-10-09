@@ -8,8 +8,8 @@ CAN_DATA = {
     '0x386': []
 }
 
-LOG_INTERVAL = 1
-NEXT_INPUT_TIME = 1
+LOG_INTERVAL = 0.5
+NEXT_INPUT_TIME = 0.5
 
 _start_time = None
 

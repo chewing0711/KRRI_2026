@@ -7,7 +7,7 @@ from scipy import stats
 import torch
 
 from .decoding_functions import decoding
-from .src.can_models import SingleGRU
+from .src.can_models import MultimodalRealtimeInferenceEngine
 
 # 경로 설정
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -16,30 +16,7 @@ MODELS_DIR = os.path.join(CURRENT_DIR, "models")
 sys.path.insert(0, CURRENT_DIR)
 sys.path.insert(0, os.path.join(CURRENT_DIR, "src"))
 
-W_SUFFIX = "_w34"
-
-scaler = joblib.load(
-    os.path.join(MODELS_DIR, f"scaler_can{W_SUFFIX}.pkl")
-)
-
-iforest = joblib.load(
-    os.path.join(MODELS_DIR, f"step1_iforest{W_SUFFIX}.pkl")
-)
-
-gru_model = SingleGRU(in_dim=44, hidden=32)
-
-gru_model.load_state_dict(
-    torch.load(
-        os.path.join(
-            MODELS_DIR,
-            f"step2_if_gru_can{W_SUFFIX}.pt"
-        ),
-        map_location="cpu",
-        weights_only=True
-    )
-)
-
-gru_model.eval()
+engine = MultimodalRealtimeInferenceEngine(MODELS_DIR)
 
 
 def inference_can(can_frame_1s):
@@ -62,7 +39,7 @@ def preprocess_can(dataset):
     df_ab = pd.DataFrame(dataset["0x371"])
 
     if any(df.empty for df in [df_ws, df_yr, df_sas, df_ab]):
-        return []
+        return np.zeros(41, dtype=np.float32)
 
     all_times = np.concatenate([
         df_ws["time"].values,
@@ -75,7 +52,7 @@ def preprocess_can(dataset):
 
     preprocessed_dataset = []
 
-    for i in range(10):
+    for i in range(5):
 
         w_start = t_base + i * 0.1
         w_end = w_start + 0.1
@@ -127,38 +104,10 @@ def preprocess_can(dataset):
             grade
         )
 
-        # 43차원
-        features_43 = [speed, grade] + raw_feats
+        preprocessed_dataset.append(raw_feats)
 
-        # Scaling
-        X_scaled = scaler.transform([features_43])[0]
-
-        # Isolation Forest
-        if_score = iforest.decision_function(
-            X_scaled.reshape(1, -1)
-        )[0]
-
-        # GRU 입력 44차원
-        features_44 = np.append(
-            X_scaled,
-            if_score
-        )
-
-        preprocessed_dataset.append(features_44)
-
-    # (10, 44)
-    preprocessed_dataset = np.array(
-        preprocessed_dataset,
-        dtype=np.float32
-    )
-
-    # GRU 입력: (1, 10, 44)
-    preprocessed_dataset = np.expand_dims(
-        preprocessed_dataset,
-        axis=0
-    )
-
-    return preprocessed_dataset
+    # 5개 서브구간의 41차원 피처 평균값 (41차원)
+    return np.mean(preprocessed_dataset, axis=0).astype(np.float32)
 
 def compute_direct_window_features(ws_seg, yr_seg, sas_seg, ab_seg, spd_target, grd_target):
     """실시간 디코딩된 윈도우 데이터(DataFrame)에서 41개 피처 추출"""
@@ -258,17 +207,9 @@ def compute_direct_window_features(ws_seg, yr_seg, sas_seg, ab_seg, spd_target, 
     ]
 
 def model_run(preprocessed_data):
-
     if len(preprocessed_data) == 0:
         return False
 
-    x = torch.tensor(
-        preprocessed_data,
-        dtype=torch.float32
-    )
-
-    with torch.no_grad():
-        output = gru_model(x)
-        pred = torch.argmax(output, dim=1).item()
-
-    return pred == 1
+    sound_24d = np.zeros(24, dtype=np.float32)
+    res = engine.infer_latent_2branch(preprocessed_data, sound_24d)
+    return res["pred"] == 1

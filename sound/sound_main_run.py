@@ -220,8 +220,8 @@ _WAV_INDEX = 0
 _WAV_OFFSET = 0
 
 
-def get_simulated_audio_from_wav(duration=1.0, samplerate=48000):
-    """마이크 부재 시 프로젝트 내 WAV 파일들을 1초씩 순차 슬라이싱하여 반환"""
+def get_simulated_audio_from_wav(duration=0.5, samplerate=48000):
+    """마이크 부재 시 프로젝트 내 WAV 파일들을 0.5초씩 순차 슬라이싱하여 반환"""
     global _WAV_CACHE, _WAV_INDEX, _WAV_OFFSET
     if _WAV_CACHE is None:
         import glob
@@ -262,13 +262,13 @@ def get_simulated_audio_from_wav(duration=1.0, samplerate=48000):
     audio_chunk = current_data[_WAV_OFFSET:_WAV_OFFSET + chunk_size]
     _WAV_OFFSET += chunk_size
 
-    # 실시간 1초 주기 시뮬레이션
+    # 실시간 0.5초 주기 시뮬레이션
     time.sleep(duration)
     return audio_chunk
 
 
-def record_audio(duration=1.0, samplerate=48000, device=None):
-    """1초 동안 마이크 음원을 수집하며 마이크 미연결 시 WAV 파일로 자동 폴백"""
+def record_audio(duration=0.5, samplerate=48000, device=None):
+    """0.5초 동안 마이크 음원을 수집하며 마이크 미연결 시 WAV 파일로 자동 폴백"""
     if device is None or device < 0:
         device = get_valid_input_device()
 
@@ -326,13 +326,23 @@ def sound_preprocess(preprocessed_sound_1s):
     return sound_model_output
 
 
+_LAST_SOUND_TIME = None
+
+
 def sound_main():
     """
     실시간 오디오 수집 -> DSP 통계량 전처리 -> AI 모델 추론 메인 파이프라인
     """
+    global _LAST_SOUND_TIME
+    now = time.time()
+    interval_str = f"{now - _LAST_SOUND_TIME:.3f}s" if _LAST_SOUND_TIME is not None else "Start"
+    _LAST_SOUND_TIME = now
+
     audio_1s = record_audio()
     preprocessed_sound_1s = preprocess_sound(audio_1s)
     sound_model_output = sound_preprocess(preprocessed_sound_1s)
+
+    # print(f"[Sound 수집/추론] 주기: {interval_str} | 샘플 수: {len(audio_1s)}개 ({len(audio_1s)/48000:.2f}초) | 결과: {sound_model_output['status']}", flush=True)
 
     return sound_model_output, audio_1s
 
