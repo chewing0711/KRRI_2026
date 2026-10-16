@@ -1,4 +1,4 @@
-# KRRI_2026 무선 수신 및 실시간 상태 모니터링 모듈
+#무선 수신 모듈
 
 import asyncio
 import time
@@ -13,7 +13,7 @@ import dbus.mainloop.glib
 from gi.repository import GLib
 from bleak import BleakClient, BleakScanner
 
-# 타겟 송신기 디바이스명 및 특성 식별자 (MAC 하드코딩 완전 제거)
+# 타겟 송신기 디바이스명 및 특성 식별자 
 TARGET_DEVICE_NAME = "easylab"
 SERVICE_UUID = "20260001-cafe-1234-5678-0123456789ab"
 CHARACTERISTIC_UUID = "20260002-cafe-1234-5678-0123456789ab"
