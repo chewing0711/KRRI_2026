@@ -314,24 +314,34 @@ def ble_send(predict_result, sound_1s, sample_rate: int = 48000):
                 continue
 
             n = len(chunk)
+            # [디스플레이 항목 1] 해당 100ms 구간의 전체 소리 크기 (전체 RMS, 0~1 실수)
             tot_rms = float(np.sqrt(np.mean(chunk ** 2)))
 
             X = np.fft.rfft(chunk)
             freqs = np.fft.rfftfreq(n, d=1.0 / sample_rate)
 
-            # RMS 가중치 계산
+            # Parseval 정리를 통한 실효치(RMS) 가중치 계산
             w = np.full(len(X), 2.0 / (n ** 2), dtype=np.float64)
             w[0] /= 2.0
             if n % 2 == 0:
                 w[-1] /= 2.0
 
             mag_sq = np.abs(X) ** 2
+            # [디스플레이 항목 2] FFT 7대역 주파수별 크기 (이퀄라이저 막대그래프용 RMS 7개)
+            # - band_rms_list[0]: 0 ~ 100 Hz
+            # - band_rms_list[1]: 100 ~ 500 Hz
+            # - band_rms_list[2]: 500 Hz ~ 1 kHz
+            # - band_rms_list[3]: 1 ~ 2 kHz
+            # - band_rms_list[4]: 2 ~ 5 kHz
+            # - band_rms_list[5]: 5 ~ 10 kHz
+            # - band_rms_list[6]: 10 ~ 24 kHz
             band_rms_list = []
             for f_low, f_high in fft_bands:
                 mask = (freqs >= f_low) & (freqs <= f_high if f_high >= 24000.0 else freqs < f_high)
                 band_pwr = float(np.sum(w[mask] * mag_sq[mask]))
                 band_rms_list.append(float(np.sqrt(max(0.0, band_pwr))))
 
+            # 1개 청크(100ms)당 총 8개 float32 (전체 RMS 1개 + 7대역 RMS 7개 = 32바이트)를 바이너리로 패킹
             packet.extend(struct.pack('<8f', tot_rms, *band_rms_list))
         
         if len(packet) < 162:
