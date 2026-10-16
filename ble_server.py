@@ -21,11 +21,14 @@ from gi.repository import GLib
 # D-Bus 및 BlueZ 인터페이스 식별자
 BLUEZ_SERVICE_NAME = 'org.bluez'
 GATT_MANAGER_IFACE = 'org.bluez.GattManager1'
+ADVERTISING_MGR_IFACE = 'org.bluez.LEAdvertisingManager1'
+ADVERTISEMENT_IFACE = 'org.bluez.LEAdvertisement1'
 DBUS_OM_IFACE = 'org.freedesktop.DBus.ObjectManager'
 DBUS_PROP_IFACE = 'org.freedesktop.DBus.Properties'
 GATT_SERVICE_IFACE = 'org.bluez.GattService1'
 GATT_CHRC_IFACE = 'org.bluez.GattCharacteristic1'
 
+DEVICE_NAME = 'easylab'
 SERVICE_UUID = '20260001-cafe-1234-5678-0123456789ab'
 CHAR_UUID = '20260002-cafe-1234-5678-0123456789ab'
 PACKET_SIZE = 164
@@ -41,6 +44,49 @@ class InvalidArgsException(dbus.exceptions.DBusException):
 
 class NotSupportedException(dbus.exceptions.DBusException):
     _dbus_error_name = 'org.bluez.Error.NotSupported'
+
+
+class Advertisement(dbus.service.Object):
+    # BlueZ LE Advertisement 객체
+    PATH_BASE = '/org/bluez/example/advertisement'
+
+    def __init__(self, bus, index, advertising_type):
+        self.path = self.PATH_BASE + str(index)
+        self.bus = bus
+        self.ad_type = advertising_type
+        self.service_uuids = None
+        self.local_name = None
+        self.include_tx_power = False
+        dbus.service.Object.__init__(self, bus, self.path)
+
+    def get_properties(self):
+        properties = dict()
+        properties['Type'] = self.ad_type
+        if self.service_uuids is not None:
+            properties['ServiceUUIDs'] = dbus.Array(self.service_uuids, signature='s')
+        if self.local_name is not None:
+            properties['LocalName'] = dbus.String(self.local_name)
+        if self.include_tx_power:
+            properties['Includes'] = dbus.Array(["tx-power"], signature='s')
+        return {ADVERTISEMENT_IFACE: properties}
+
+    def get_path(self):
+        return dbus.ObjectPath(self.path)
+
+    def add_service_uuid(self, uuid):
+        if not self.service_uuids:
+            self.service_uuids = []
+        self.service_uuids.append(uuid)
+
+    @dbus.service.method(DBUS_PROP_IFACE, in_signature='s', out_signature='a{sv}')
+    def GetAll(self, interface):
+        if interface == ADVERTISEMENT_IFACE:
+            return self.get_properties()[ADVERTISEMENT_IFACE]
+        raise InvalidArgsException()
+
+    @dbus.service.method(ADVERTISEMENT_IFACE, in_signature='', out_signature='')
+    def Release(self):
+        pass
 
 
 class Characteristic(dbus.service.Object):
@@ -190,6 +236,16 @@ class Application(dbus.service.Object):
         return response
 
 
+def find_adapter(bus):
+    # BlueZ ObjectManager를 통해 활성 Bluetooth 어댑터 D-Bus 경로를 자동 탐색
+    remote_om = dbus.Interface(bus.get_object(BLUEZ_SERVICE_NAME, '/'), DBUS_OM_IFACE)
+    objects = remote_om.GetManagedObjects()
+    for o, props in objects.items():
+        if GATT_MANAGER_IFACE in props.keys():
+            return o
+    return '/org/bluez/hci0'
+
+
 def load_all_wav_files(directory: str = None, target_sr: int = 48000):
     # 지정 경로의 모든 WAV 음원 파일을 메모리에 일괄 로드
     import glob
@@ -230,6 +286,11 @@ def ble_send(predict_result, sound_1s, sample_rate: int = 48000):
                 global_client_shm = shared_memory.SharedMemory(name='ble_shm', create=True, size=PACKET_SIZE)
             except FileExistsError:
                 global_client_shm = shared_memory.SharedMemory(name='ble_shm', create=False)
+            try:
+                from multiprocessing import resource_tracker
+                resource_tracker.unregister('/' + global_client_shm.name, 'shared_memory')
+            except Exception:
+                pass
         
         status_code = 1 if (predict_result == 1 or predict_result is True) else 0
         packet = bytearray([0xAA, status_code])
@@ -270,13 +331,15 @@ def start_server():
     subprocess.run("sudo systemctl restart bluetooth", shell=True, check=False)
     time.sleep(1.0)
 
-    subprocess.run(['sudo', 'iw', 'wlan0', 'set', 'power_save', 'off'], check=False)
+    subprocess.run(['bluetoothctl', 'system-alias', DEVICE_NAME], check=False)
     subprocess.run(['sudo', 'btmgmt', 'power', 'off'], check=False)
     subprocess.run(['sudo', 'btmgmt', 'bredr', 'off'], check=False)
     subprocess.run(['sudo', 'btmgmt', 'le', 'on'], check=False)
+    subprocess.run(['sudo', 'btmgmt', 'bondable', 'off'], check=False)
     subprocess.run(['sudo', 'btmgmt', 'connectable', 'on'], check=False)
     subprocess.run(['sudo', 'btmgmt', 'power', 'on'], check=False)
     subprocess.run(['sudo', 'btmgmt', 'advertising', 'on'], check=False)
+    subprocess.run(['bluetoothctl', 'pairable', 'off'], check=False)
     subprocess.run(['bluetoothctl', 'discoverable', 'on'], check=False)
 
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
@@ -289,8 +352,22 @@ def start_server():
     app = Application(bus)
     app.add_service(srv)
 
-    manager = dbus.Interface(bus.get_object(BLUEZ_SERVICE_NAME, '/org/bluez/hci0'), GATT_MANAGER_IFACE)
+    adapter_path = find_adapter(bus)
+    adapter_obj = bus.get_object(BLUEZ_SERVICE_NAME, adapter_path)
+    manager = dbus.Interface(adapter_obj, GATT_MANAGER_IFACE)
     manager.RegisterApplication(app.get_path(), {}, reply_handler=lambda: print("무선 송신 앱 등록 성공", flush=True), error_handler=lambda e: print(f"무선 송신 앱 등록 실패: {e}", flush=True))
+
+    try:
+        ad_manager = dbus.Interface(adapter_obj, ADVERTISING_MGR_IFACE)
+        adv = Advertisement(bus, 0, 'peripheral')
+        adv.local_name = DEVICE_NAME
+        ad_manager.RegisterAdvertisement(
+            adv.get_path(), {},
+            reply_handler=lambda: print(f"BLE 광고 등록 성공 ({DEVICE_NAME})", flush=True),
+            error_handler=lambda e: print(f"BLE 하드웨어 비콘 활성화 ({DEVICE_NAME})", flush=True)
+        )
+    except Exception:
+        print(f"BLE 하드웨어 비콘 활성화 ({DEVICE_NAME})", flush=True)
 
     try:
         global_shm = shared_memory.SharedMemory(name='ble_shm', create=True, size=PACKET_SIZE)
@@ -326,6 +403,10 @@ def start_server():
         pass
     finally:
         print("무선 송신 서버 종료 중", flush=True)
+        try:
+            ad_manager.UnregisterAdvertisement(adv.get_path())
+        except:
+            pass
         try:
             manager.UnregisterApplication(app.get_path())
         except:

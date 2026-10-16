@@ -206,10 +206,19 @@ def compute_direct_window_features(ws_seg, yr_seg, sas_seg, ab_seg, spd_target, 
         dimless_std, dimless_p2p, dimless_diff_fr_rr_std, pedal_slip_response
     ]
 
-def model_run(preprocessed_data):
+def model_run(preprocessed_data, sound_data=None):
     if len(preprocessed_data) == 0:
         return False
 
-    sound_24d = np.zeros(24, dtype=np.float32)
+    if sound_data is not None and len(sound_data) > 0:
+        if len(sound_data) == 24:
+            sound_24d = np.asarray(sound_data, dtype=np.float32)
+        else:
+            from sound.sound_main_run import apply_bandpass_filter, extract_audio_features_from_array
+            sound_filtered = apply_bandpass_filter(sound_data)
+            sound_24d = extract_audio_features_from_array(sound_filtered).ravel()
+    else:
+        sound_24d = np.zeros(24, dtype=np.float32)
+
     res = engine.infer_latent_2branch(preprocessed_data, sound_24d)
     return res["pred"] == 1

@@ -13,8 +13,9 @@ import dbus.mainloop.glib
 from gi.repository import GLib
 from bleak import BleakClient, BleakScanner
 
-# 타겟 송신기 MAC 주소 및 특성 식별자
-SERVER_MAC = "2C:CF:67:63:37:AA"
+# 타겟 송신기 디바이스명 및 특성 식별자 (MAC 하드코딩 완전 제거)
+TARGET_DEVICE_NAME = "easylab"
+SERVICE_UUID = "20260001-cafe-1234-5678-0123456789ab"
 CHARACTERISTIC_UUID = "20260002-cafe-1234-5678-0123456789ab"
 AGENT_PATH = "/org/bluez/AutoAgent"
 EXPECTED_PACKET_SIZE = 164
@@ -95,36 +96,54 @@ def on_receive(sender, data: bytearray):
     print(f"{current_time} Status: {status_str} ({status_code}) | dB: {db_val:.1f} dB", flush=True)
 
 
-def clean_bluetooth_environment():
+def clean_bluetooth_environment(target_addr=None):
     # 이전 블루투스 연결 상태 및 스캔 초기화
     try:
-        subprocess.run(["bluetoothctl", "disconnect", SERVER_MAC], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+        if target_addr:
+            subprocess.run(["bluetoothctl", "disconnect", target_addr], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
         subprocess.run(["bluetoothctl", "scan", "off"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
-    except:
+    except Exception:
         pass
 
 
 async def main():
     # BLE 수신 메인 루프 및 연결 감시 데몬
-    print(f"BLE 수신기 시작 (타겟 MAC: {SERVER_MAC}, 패킷 규격: {EXPECTED_PACKET_SIZE}B)", flush=True)
+    print(f"BLE 수신기 시작 (타겟 기기명: '{TARGET_DEVICE_NAME}', 패킷 규격: {EXPECTED_PACKET_SIZE}B)", flush=True)
     clean_bluetooth_environment()
     setup_bluez_agent()
     await asyncio.sleep(0.5)
 
+    last_address = None
+
     while True:
         try:
-            # 1. 타겟 디바이스 탐색
-            print(f"송신기({SERVER_MAC}) 검색 중", flush=True)
-            device = await BleakScanner.find_device_by_address(SERVER_MAC, timeout=5.0)
+            # 1. 디바이스명(sender_easyLab) 기반 자동 탐색
+            print(f"송신기('{TARGET_DEVICE_NAME}') 검색 중...", flush=True)
+            
+            def match_device(device, adv):
+                name = (device.name or adv.local_name or "").lower()
+                # 1. 디바이스명 매칭 (BLE 광고 길이 제한으로 10글자 잘린 'sender_eas' 포함)
+                if "sender_eas" in name or "easylab" in name or "sender" in name:
+                    return True
+                # 2. Service UUID 매칭
+                if adv.service_uuids:
+                    if any(SERVICE_UUID.lower() == u.lower() for u in adv.service_uuids):
+                        return True
+                return False
+
+            device = await BleakScanner.find_device_by_filter(match_device, timeout=5.0)
             if not device:
-                print(f"송신기({SERVER_MAC})를 찾지 못했습니다. 재시도 중", flush=True)
+                print(f"송신기('{TARGET_DEVICE_NAME}')를 찾지 못했습니다. 재시도 중...", flush=True)
                 await asyncio.sleep(0.5)
                 continue
 
+            last_address = device.address
+            print(f"송신기 발견! -> {device.name} (MAC: {device.address})", flush=True)
+
             # 2. GATT 서버 연결
-            print(f"송신기({SERVER_MAC}) GATT 연결 시도 중", flush=True)
+            print(f"송신기({device.address}) GATT 연결 시도 중...", flush=True)
             async with BleakClient(device, timeout=10.0) as client:
-                print(f"GATT 연결 성공 (MTU: {client.mtu_size}). 서비스 탐색 중", flush=True)
+                print(f"GATT 연결 성공 (MTU: {client.mtu_size}). 서비스 탐색 중...", flush=True)
                 
                 # 3. 타겟 Characteristic 탐색
                 target_char = None
@@ -137,7 +156,7 @@ async def main():
                         break
 
                 if not target_char:
-                    print("타겟 Characteristic을 찾지 못했습니다. 재검색 중", flush=True)
+                    print("타겟 Characteristic을 찾지 못했습니다. 재검색 중...", flush=True)
                     await asyncio.sleep(0.5)
                     continue
 
@@ -145,18 +164,17 @@ async def main():
                 
                 # 4. 실시간 Notification 구독
                 await client.start_notify(target_char, on_receive)
-                print("실시간 스트리밍 정상 동작 중\n", flush=True)
+                print("실시간 스트리밍 정상 수신 대기 중...\n", flush=True)
                 
                 # 5. 연결 유지 모니터링
                 while client.is_connected:
                     await asyncio.sleep(0.5)
 
-                print("연결 해제 감지. 자동 재연결 중", flush=True)
+                print("연결 해제 감지. 자동 재연결 중...", flush=True)
 
         except Exception as e:
             # 이전 연결 시도 락 및 스캔 상태 강제 초기화
-            subprocess.run(["bluetoothctl", "disconnect", SERVER_MAC], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
-            subprocess.run(["bluetoothctl", "scan", "off"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+            clean_bluetooth_environment(last_address)
             print(f"재연결 대기 중: {e}", flush=True)
             await asyncio.sleep(1.0)
 
