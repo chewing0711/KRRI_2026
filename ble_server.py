@@ -295,21 +295,44 @@ def ble_send(predict_result, sound_1s, sample_rate: int = 48000):
         status_code = 1 if (predict_result == 1 or predict_result is True) else 0
         packet = bytearray([0xAA, status_code])
         
-        chunks = np.array_split(sound_1s, 20)
+        # 100ms씩 총 5개 구간 분할 (0.5초 / 48kHz = 24,000샘플 -> 구간당 4,800샘플)
+        # 각 구간당 전체 RMS 1개 + FFT 대역별 RMS 7개 (0~100Hz, 100~500Hz, 500Hz~1kHz, 1~2kHz, 2~5kHz, 5~10kHz, 10~24kHz)
+        fft_bands = [
+            (0.0, 100.0),
+            (100.0, 500.0),
+            (500.0, 1000.0),
+            (1000.0, 2000.0),
+            (2000.0, 5000.0),
+            (5000.0, 10000.0),
+            (10000.0, 24000.0)
+        ]
+
+        chunks = np.array_split(sound_1s, 5)
         for chunk in chunks:
             if len(chunk) == 0:
+                packet.extend(struct.pack('<8f', 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
                 continue
-            # RMS (Root Mean Square, 실효 음압 에너지) 계산
-            rmse = float(np.sqrt(np.mean(chunk ** 2)))
-            
-            # FFT (Fast Fourier Transform, 고속 푸리에 변환) 기반 주파수 대역폭(Spectral Bandwidth) 계산
-            fft_val = np.abs(np.fft.rfft(chunk))
-            total_power = np.sum(fft_val) + 1e-12
-            freq = np.fft.rfftfreq(len(chunk), d=1.0 / sample_rate)
-            center_freq = np.sum(freq * fft_val) / total_power
-            bw = float(np.sqrt(np.sum(((freq - center_freq) ** 2) * fft_val) / total_power))
-            
-            packet.extend(struct.pack('<ff', rmse, bw))
+
+            n = len(chunk)
+            tot_rms = float(np.sqrt(np.mean(chunk ** 2)))
+
+            X = np.fft.rfft(chunk)
+            freqs = np.fft.rfftfreq(n, d=1.0 / sample_rate)
+
+            # Parseval 정리를 통한 실효치(RMS) 가중치 계산
+            w = np.full(len(X), 2.0 / (n ** 2), dtype=np.float64)
+            w[0] /= 2.0
+            if n % 2 == 0:
+                w[-1] /= 2.0
+
+            mag_sq = np.abs(X) ** 2
+            band_rms_list = []
+            for f_low, f_high in fft_bands:
+                mask = (freqs >= f_low) & (freqs <= f_high if f_high >= 24000.0 else freqs < f_high)
+                band_pwr = float(np.sum(w[mask] * mag_sq[mask]))
+                band_rms_list.append(float(np.sqrt(max(0.0, band_pwr))))
+
+            packet.extend(struct.pack('<8f', tot_rms, *band_rms_list))
         
         if len(packet) < 162:
             packet.extend(b'\x00' * (162 - len(packet)))
