@@ -19,12 +19,15 @@ sys.path.insert(0, os.path.join(CURRENT_DIR, "src"))
 engine = MultimodalRealtimeInferenceEngine(MODELS_DIR)
 
 
-def inference_can(can_frame_1s):
-    dataset = decoding(can_frame_1s)
-    
-    preprocessed_data = preprocess_can(dataset)
-    
-    is_abnormal = model_run(preprocessed_data)
+def inference(can_frame_half, audio_features_24d):
+    dataset = decoding(can_frame_half)
+
+    can_features_41d = preprocess_can(dataset)
+
+    is_abnormal = model_run(
+        can_features_41d,
+        audio_features_24d
+    )
 
     return is_abnormal
 
@@ -48,7 +51,8 @@ def preprocess_can(dataset):
         df_ab["time"].values
     ])
 
-    t_base = np.floor(np.min(all_times))
+    # 수정 (CAN 수집 주기 0.5초)
+    t_base = np.floor(np.min(all_times) / 0.5) * 0.5
 
     preprocessed_dataset = []
 
@@ -206,10 +210,18 @@ def compute_direct_window_features(ws_seg, yr_seg, sas_seg, ab_seg, spd_target, 
         dimless_std, dimless_p2p, dimless_diff_fr_rr_std, pedal_slip_response
     ]
 
-def model_run(preprocessed_data):
-    if len(preprocessed_data) == 0:
-        return False
+def model_run(can_features_41d, audio_features_24d):
 
-    sound_24d = np.zeros(24, dtype=np.float32)
-    res = engine.infer_latent_2branch(preprocessed_data, sound_24d)
-    return res["pred"] == 1
+    audio_features_24d = np.asarray(
+        audio_features_24d, dtype=np.float32
+    ).reshape(-1)
+
+    if audio_features_24d.size != 24:
+        raise ValueError("Audio 특징은 24차원이어야 합니다.")
+
+    res = engine.infer_latent_2branch(
+        can_features_41d,
+        audio_features_24d
+    )
+
+    return int(res["pred"])

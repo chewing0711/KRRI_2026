@@ -1,0 +1,40 @@
+# KRRI_2026 - Python dependencies (Raspberry Pi 5 / Linux)
+# Source: https://github.com/chewing0711/KRRI_2026 (main)
+#
+# Recommended setup (Raspberry Pi OS 64-bit):
+#   sudo apt install -y python3-venv python3-dbus python3-gi gir1.2-glib-2.0 \
+#       bluez can-utils iw alsa-utils libportaudio2 libsndfile1
+#   python3 -m venv --system-site-packages .venv
+#   source .venv/bin/activate
+#   python -m pip install -r requirements.txt
+#
+# IMPORTANT: Python imports `dbus` and `gi.repository.GLib` are provided by
+# `python3-dbus` and `python3-gi` (apt), NOT installed via this pip file.
+
+# AI inference and data processing
+numpy>=1.24.0
+pandas>=2.0.0
+scipy>=1.10.0
+scikit-learn>=1.3.0
+joblib>=1.3.0
+xgboost>=2.0.0
+torch>=2.0.0
+
+# Sound recording and WAV fallback
+sounddevice
+soundfile
+
+# CAN / SocketCAN
+python-can
+
+# BLE client (ble_receiver.py; needed on the Linux receiver)
+bleak
+
+# Raspberry Pi thermal/performance test (thermal_test.py)
+psutil>=5.9.0
+
+# Optional utilities; uncomment only when needed:
+# matplotlib>=3.7.0  # plotting / analysis scripts
+# pyserial>=3.5       # test.py with SLCAN (/dev/ttyACM0)
+# torchvision         # not imported by current main branch
+# pyobjc              # macOS only: ble_test.py (do not install on Raspberry Pi)

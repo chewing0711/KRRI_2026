@@ -304,7 +304,7 @@ def preprocess_sound(audio_1s, samplerate=48000):
     scaler, _ = load_audio_model_and_scaler()
     preprocessed_sound_1s = scaler.transform(raw_features)
 
-    return preprocessed_sound_1s
+    return preprocessed_sound_1s, raw_features.flatten()
 
 
 def sound_preprocess(preprocessed_sound_1s):
@@ -330,19 +330,26 @@ _LAST_SOUND_TIME = None
 
 
 def sound_main():
-    """
-    실시간 오디오 수집 -> DSP 통계량 전처리 -> AI 모델 추론 메인 파이프라인
-    """
-    global _LAST_SOUND_TIME
-    now = time.time()
-    interval_str = f"{now - _LAST_SOUND_TIME:.3f}s" if _LAST_SOUND_TIME is not None else "Start"
-    _LAST_SOUND_TIME = now
+    # 1. 마이크 음향 0.5초 수집
+    audio_half = record_audio(
+        duration=0.5,
+        samplerate=48000
+    )
 
-    audio_1s = record_audio()
-    preprocessed_sound_1s = preprocess_sound(audio_1s)
-    sound_model_output = sound_preprocess(preprocessed_sound_1s)
+    # 2. Bandpass Filter 적용
+    audio_filtered = apply_bandpass_filter(
+        audio_half,
+        lowcut=1800.0,
+        highcut=10500.0,
+        fs=48000,
+        order=4
+    )
 
-    # print(f"[Sound 수집/추론] 주기: {interval_str} | 샘플 수: {len(audio_1s)}개 ({len(audio_1s)/48000:.2f}초) | 결과: {sound_model_output['status']}", flush=True)
+    # 3. Audio 24차원 특징 추출
+    audio_features_24d = extract_audio_features_from_array(
+        audio_filtered,
+        sr=48000
+    ).reshape(-1)
 
-    return sound_model_output, audio_1s
+    return audio_half, audio_features_24d
 
