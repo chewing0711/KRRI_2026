@@ -319,7 +319,7 @@ def ble_send(predict_result, sound_1s, sample_rate: int = 48000):
             X = np.fft.rfft(chunk)
             freqs = np.fft.rfftfreq(n, d=1.0 / sample_rate)
 
-            # Parseval 정리를 통한 실효치(RMS) 가중치 계산
+            # RMS 가중치 계산
             w = np.full(len(X), 2.0 / (n ** 2), dtype=np.float64)
             w[0] /= 2.0
             if n % 2 == 0:
