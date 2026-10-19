@@ -1,0 +1,82 @@
+블루투스 무선 서비스 초기화 및 캐시 정리 중
+Changing easylab succeeded
+Traceback (most recent call last):
+  File "/home/pi/KRRI_2026/ble_server.py", line 456, in <module>
+    start_server()
+    ~~~~~~~~~~~~^^
+  File "/home/pi/KRRI_2026/ble_server.py", line 368, in start_server
+    subprocess.run(['sudo', 'btmgmt', 'power', 'off'], check=False)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/subprocess.py", line 556, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/subprocess.py", line 1214, in communicate
+    self.wait()
+    ~~~~~~~~~^^
+  File "/usr/lib/python3.13/subprocess.py", line 1280, in wait
+    return self._wait(timeout=timeout)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/subprocess.py", line 2066, in _wait
+    (pid, sts) = self._try_wait(0)
+                 ~~~~~~~~~~~~~~^^^
+  File "/usr/lib/python3.13/subprocess.py", line 2024, in _try_wait
+    (pid, sts) = os.waitpid(self.pid, wait_flags)
+                 ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+블루투스 무선 서비스 초기화 및 캐시 정리 중
+Changing easylab succeeded
+Traceback (most recent call last):
+  File "/home/pi/KRRI_2026/ble_server.py", line 456, in <module>
+    start_server()
+    ~~~~~~~~~~~~^^
+  File "/home/pi/KRRI_2026/ble_server.py", line 368, in start_server
+    subprocess.run(['sudo', 'btmgmt', 'power', 'off'], check=False)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/subprocess.py", line 556, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/subprocess.py", line 1214, in communicate
+    self.wait()
+    ~~~~~~~~~^^
+  File "/usr/lib/python3.13/subprocess.py", line 1280, in wait
+    return self._wait(timeout=timeout)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/subprocess.py", line 2066, in _wait
+    (pid, sts) = self._try_wait(0)
+                 ~~~~~~~~~~~~~~^^^
+  File "/usr/lib/python3.13/subprocess.py", line 2024, in _try_wait
+    (pid, sts) = os.waitpid(self.pid, wait_flags)
+                 ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+블루투스 무선 서비스 초기화 및 캐시 정리 중
+Bluetooth 어댑터 상태 확인 중...
+Bluetooth 어댑터 확인 완료
+공유 메모리(164B) 연결 완료. 실시간 모니터링 시작
+무선 송신 앱 등록 성공
+BLE 광고 등록 성공 (easylab)
+무선 송신 서버 종료 중
+블루투스 무선 서비스 초기화 및 캐시 정리 중
+Bluetooth 어댑터 상태 확인 중...
+Bluetooth 어댑터 확인 완료
+공유 메모리(164B) 연결 완료. 실시간 모니터링 시작
+무선 송신 앱 등록 성공
+BLE 광고 등록 성공 (easylab)
+수신기가 실시간 스트리밍을 구독했습니다
+무선 송신 서버 종료 중
+블루투스 무선 서비스 초기화 및 캐시 정리 중
+Bluetooth 어댑터 상태 확인 중...
+Bluetooth 어댑터 확인 완료
+공유 메모리(164B) 연결 완료. 실시간 모니터링 시작
+무선 송신 앱 등록 성공
+BLE 광고 등록 성공 (easylab)
+수신기가 실시간 스트리밍을 구독했습니다
+수신기가 실시간 스트리밍을 중단했습니다
+무선 송신 서버 종료 중
+블루투스 무선 서비스 초기화 및 캐시 정리 중
+Bluetooth 어댑터 상태 확인 중...
+Bluetooth 어댑터 확인 완료
+공유 메모리(164B) 연결 완료. 실시간 모니터링 시작
+무선 송신 앱 등록 성공
+BLE 광고 등록 성공 (easylab)
+수신기가 실시간 스트리밍을 구독했습니다
+무선 송신 서버 종료 중

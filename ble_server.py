@@ -360,20 +360,37 @@ def start_server():
     global global_shm
 
     print("블루투스 무선 서비스 초기화 및 캐시 정리 중", flush=True)
-    subprocess.run("sudo rm -rf /var/lib/bluetooth/*/cache/*", shell=True, check=False)
-    subprocess.run("sudo systemctl restart bluetooth", shell=True, check=False)
-    time.sleep(1.0)
+    # subprocess.run("sudo rm -rf /var/lib/bluetooth/*/cache/*", shell=True, check=False)
+    # subprocess.run("sudo systemctl restart bluetooth", shell=True, check=False)
+    # time.sleep(1.0)
 
-    subprocess.run(['bluetoothctl', 'system-alias', DEVICE_NAME], check=False)
-    subprocess.run(['sudo', 'btmgmt', 'power', 'off'], check=False)
-    subprocess.run(['sudo', 'btmgmt', 'bredr', 'off'], check=False)
-    subprocess.run(['sudo', 'btmgmt', 'le', 'on'], check=False)
-    subprocess.run(['sudo', 'btmgmt', 'bondable', 'off'], check=False)
-    subprocess.run(['sudo', 'btmgmt', 'connectable', 'on'], check=False)
-    subprocess.run(['sudo', 'btmgmt', 'power', 'on'], check=False)
-    subprocess.run(['sudo', 'btmgmt', 'advertising', 'on'], check=False)
-    subprocess.run(['bluetoothctl', 'pairable', 'off'], check=False)
-    subprocess.run(['bluetoothctl', 'discoverable', 'on'], check=False)
+    # subprocess.run(['bluetoothctl', 'system-alias', DEVICE_NAME], check=False)
+    # subprocess.run(['sudo', 'btmgmt', 'power', 'off'], check=False)
+    # subprocess.run(['sudo', 'btmgmt', 'bredr', 'off'], check=False)
+    # subprocess.run(['sudo', 'btmgmt', 'le', 'on'], check=False)
+    # subprocess.run(['sudo', 'btmgmt', 'bondable', 'off'], check=False)
+    # subprocess.run(['sudo', 'btmgmt', 'connectable', 'on'], check=False)
+    # subprocess.run(['sudo', 'btmgmt', 'power', 'on'], check=False)
+    # subprocess.run(['sudo', 'btmgmt', 'advertising', 'on'], check=False)
+    # subprocess.run(['bluetoothctl', 'pairable', 'off'], check=False)
+    # subprocess.run(['bluetoothctl', 'discoverable', 'on'], check=False)
+
+    print("Bluetooth 어댑터 상태 확인 중...", flush=True)
+
+    # Bluetooth 전원을 강제로 끄거나 서비스를 재시작하지 않음
+    result = subprocess.run(
+        ["bluetoothctl", "show"],
+        capture_output=True,
+        text=True,
+        timeout=5
+    )
+
+    if result.returncode != 0 or "Powered: yes" not in result.stdout:
+        raise RuntimeError(
+            "Bluetooth 어댑터가 켜져 있지 않습니다."
+        )
+
+    print("Bluetooth 어댑터 확인 완료", flush=True)
 
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
     bus = dbus.SystemBus()

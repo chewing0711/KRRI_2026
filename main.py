@@ -16,8 +16,14 @@ from custom_exception import SoundNoDevice, CANNoDevice, check_mic, check_can
 from terminal_view import TerminalView
 import can
 
-BLE 필요시 기존 코드 그대로 주석 해제
+import subprocess
+import sys
+from pathlib import Path
+
+# BLE 필요시 기존 코드 그대로 주석 해제
 from ble_server import ble_send
+
+BASE_DIR = Path(__file__).resolve().parent
 
 CAN_TIMEOUT_SECONDS = 2.0
 MAX_AUDIO_CAN_GAP_SECONDS = 0.75
@@ -25,10 +31,43 @@ MAX_AUDIO_CAN_GAP_SECONDS = 0.75
 
 def main():
     bus = None
+    ble_process = None
+    ble_log = None
+
     try:
         check_mic()
         check_can()
+
         bus = can.Bus(interface="socketcan", channel="can0")
+
+        # BLE 서버 자동 실행
+        # Rich 터미널 화면과 로그가 섞이지 않도록 파일에 기록
+        ble_log = open(
+            BASE_DIR / "ble_server.log",
+            "a",
+            buffering=1,
+            encoding="utf-8"
+        )
+
+        ble_process = subprocess.Popen(
+            [
+                sys.executable,
+                "-u",
+                str(BASE_DIR / "ble_server.py")
+            ],
+            cwd=BASE_DIR,
+            stdin=subprocess.DEVNULL,
+            stdout=ble_log,
+            stderr=subprocess.STDOUT
+        )
+
+        # BLE 서버 시작 대기
+        time.sleep(2)
+
+        if ble_process.poll() is not None:
+            raise RuntimeError(
+                "BLE 서버 실행 실패. ble_server.log 확인"
+            )
 
         with ThreadPoolExecutor(max_workers=2) as executor, TerminalView() as view:
             # CAN과 마이크를 각각 독립적으로 수집한다.
@@ -38,6 +77,10 @@ def main():
             pending_can = None
 
             while True:
+                if ble_process.poll() is not None:
+                    raise RuntimeError(
+                        "BLE 서버가 종료되었습니다. ble_server.log 확인"
+                )
                 done, _ = wait(
                     [can_future, sound_future],
                     timeout=0.2,
@@ -89,6 +132,20 @@ def main():
     finally:
         if bus is not None:
             bus.shutdown()
+
+        # main.py 종료 시 BLE 서버도 종료
+        if ble_process is not None:
+            if ble_process.poll() is None:
+                ble_process.terminate()
+
+                try:
+                    ble_process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    ble_process.kill()
+                    ble_process.wait()
+
+        if ble_log is not None:
+            ble_log.close()
 
 
 if __name__ == "__main__":
