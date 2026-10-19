@@ -16,8 +16,8 @@ from custom_exception import SoundNoDevice, CANNoDevice, check_mic, check_can
 from terminal_view import TerminalView
 import can
 
-# BLE 필요시 기존 코드 그대로 주석 해제
-# from ble_server import ble_send
+BLE 필요시 기존 코드 그대로 주석 해제
+from ble_server import ble_send
 
 CAN_TIMEOUT_SECONDS = 2.0
 MAX_AUDIO_CAN_GAP_SECONDS = 0.75
@@ -52,7 +52,7 @@ def main():
                     finished_at = time.monotonic()
                     sound_future = executor.submit(sound_main)
                     view.update_audio(sound_frame_half)
-                    latest_audio = (audio_features_24d, finished_at)
+                    latest_audio = (sound_frame_half, audio_features_24d, finished_at)
 
                 if can_future in done:
                     can_frame_half, relative_time = can_future.result()
@@ -68,12 +68,11 @@ def main():
                 # CAN과 Audio 모두 최근 데이터를 확보했을 때만 멀티모달 추론.
                 if pending_can is not None and latest_audio is not None:
                     can_frame_half, can_at = pending_can
-                    audio_features_24d, audio_at = latest_audio
+                    sound_frame_half, audio_features_24d, audio_at = latest_audio
                     if abs(can_at - audio_at) <= MAX_AUDIO_CAN_GAP_SECONDS:
                         result = int(inference(can_frame_half, audio_features_24d))
                         view.update_result(result)
-                        # BLE 필요 시 두 데이터를 사용해 송신할 수 있음.
-                        # ble_send(result, sound_frame_half)
+                        ble_send(result, sound_frame_half)
                         pending_can = None
                         latest_audio = None
                     elif can_at < audio_at:

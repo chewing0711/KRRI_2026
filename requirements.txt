@@ -33,6 +33,9 @@ bleak
 # Raspberry Pi thermal/performance test (thermal_test.py)
 psutil>=5.9.0
 
+# Terminal monitoring
+rich>=13.0
+
 # Optional utilities; uncomment only when needed:
 # matplotlib>=3.7.0  # plotting / analysis scripts
 # pyserial>=3.5       # test.py with SLCAN (/dev/ttyACM0)
