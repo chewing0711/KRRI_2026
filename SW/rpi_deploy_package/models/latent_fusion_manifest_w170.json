@@ -1,34 +1,28 @@
 {
-  "pipeline_name": "Pattern-Energy 2-Branch Latent Cross-Modal Fusion Pipeline",
+  "pipeline_name": "Pattern-Energy 2-Branch Latent Cross-Modal Fusion Pipeline (OBD)",
+  "channel": "obd",
   "window_size": 170,
   "latent_dimension": 16,
   "fusion_features_count": 40,
   "models": {
     "dual_autoencoder": "dual_autoencoder_latent_w170.pt",
-    "classifier": "hgb_latent_fusion_w170.pkl"
+    "classifier": "hgb_latent_fusion_w170.pkl",
+    "fast_weights": "latent_fusion_fast_weights.pkl"
   },
   "scalers": {
     "can_scaler": "scaler_can_latent_w170.pkl",
     "audio_scaler": "scaler_audio_latent_w170.pkl"
   },
-  "performance_5fold_cv": {
-    "accuracy": 0.993701883269031,
-    "precision": 0.9942789411488281,
-    "recall": 0.9934626965540314,
-    "f1": 0.9938683283828347,
-    "roc_auc": 0.9996999627084652
-  },
-  "domain_generalization_unseen_60kph": {
-    "accuracy": 0.994579945799458,
-    "precision": 1.0,
-    "recall": 0.9891304347826086,
-    "f1": 0.994535519125683,
-    "roc_auc": 0.9996180963572268
+  "performance_embargo_test": {
+    "accuracy": 0.9448979591836735,
+    "precision": 0.9409448818897638,
+    "recall": 0.952191235059761,
+    "f1": 0.9465346534653465,
+    "roc_auc": 0.9436146626881596
   },
   "separation_metrics": {
-    "cohens_d": 9.147697407466241,
-    "normal_dist": 0.32259073853492737,
-    "abnormal_dist": 1.6957694292068481,
-    "separation_gap": 1.3731787204742432
+    "normal_dist": 0.4344542324542999,
+    "abnormal_dist": 1.6176475286483765,
+    "separation_gap": 1.1831932961940765
   }
 }
