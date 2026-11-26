@@ -38,7 +38,7 @@ def main():
         check_mic()
         check_can()
 
-        bus = can.Bus(interface="socketcan", channel="can0")
+        bus = can.Bus(interface="socketcan", channel="can0", bitrate=500000)
 
         # BLE 서버 자동 실행
         # Rich 터미널 화면과 로그가 섞이지 않도록 파일에 기록

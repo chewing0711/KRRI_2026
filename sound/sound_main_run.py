@@ -276,6 +276,7 @@ def record_audio(duration=0.5, samplerate=48000, device=None):
         return get_simulated_audio_from_wav(duration=duration, samplerate=samplerate)
 
     try:
+        gain = 2.0
         audio = sd.rec(
             int(duration * samplerate),
             samplerate=samplerate,
@@ -284,7 +285,7 @@ def record_audio(duration=0.5, samplerate=48000, device=None):
             device=device
         )
         sd.wait()
-        return audio.flatten()
+        return np.clip(audio.flatten() * gain, -1.0, 1.0)
     except Exception:
         return get_simulated_audio_from_wav(duration=duration, samplerate=samplerate)
 
